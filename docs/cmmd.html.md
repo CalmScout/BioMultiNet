@@ -165,20 +165,20 @@ def CmmD(nodelist=None, input_layers=None, resolution_start=None, resolution_end
 ```
 
 ``` python
-# add "../../Python/" to path
-sys.path.append("../../Python/")
+# # add "../../Python/" to path
+# sys.path.append("../../Python/")
 
-prefix = "../../data/networks-tiny/"
-input_layers = [prefix + "interactom.csv",
-                prefix + "reactom.csv",
-                prefix + "recon_3d.csv"]
+# prefix = "../../data/networks-tiny/"
+# input_layers = [prefix + "interactom.csv",
+#                 prefix + "reactom.csv",
+#                 prefix + "recon_3d.csv"]
 
-CmmD(nodelist = None,
-     input_layers = input_layers,
-     resolution_start = 0,
-     resolution_end = 2,
-     interval = 1,
-     destfile_community_analysis = "Output/",
-     distmethod = "hamming",
-     threads = 6)
+# CmmD(nodelist = None,
+#      input_layers = input_layers,
+#      resolution_start = 0,
+#      resolution_end = 2,
+#      interval = 1,
+#      destfile_community_analysis = "Output/",
+#      distmethod = "hamming",
+#      threads = 6)
 ```

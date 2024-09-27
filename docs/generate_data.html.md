@@ -27,31 +27,71 @@ Create a small multilayer graph for testing purposes.
 
 >      obfuscate_nodes (n_nodes:int, str_len:int=10)
 
-*Maps nodes from range \[0, n_nodes) to random strings of length
-str_len*
+*Maps nodes from range \[0, n_nodes) to unique random strings of length
+str_len. All upper case letters and digits are used, starts with a
+letter.*
 
 ``` python
 d = obfuscate_nodes(n_nodes=10)
 d
 ```
 
-    {0: 'ZEERP9X9YZ',
-     1: 'I69P25FUZY',
-     2: 'NOZRBIZW72',
-     3: 'SYKL461WOA',
-     4: 'BT33J1VILM',
-     5: 'RSFHAXR3DU',
-     6: 'GS2WXNO1O8',
-     7: 'DB4VF0FH1C',
-     8: 'I8XOJYKED0',
-     9: 'SD11TMJSK0'}
+    {0: 'TDM64O28SE',
+     1: 'RM5SDNA1OK',
+     2: 'QR899VV1BX',
+     3: 'KY0DL1ZA12',
+     4: 'LMJ97OFR4T',
+     5: 'SF9IFSZ6FW',
+     6: 'NPDRTOOGCO',
+     7: 'Q2VY4N4GSM',
+     8: 'XLRB0CDJQV',
+     9: 'ZQDUOFQK5Z'}
+
+The following is a thin wrapper around the random graph generators from
+[networkx](https://networkx.org/documentation/stable/reference/generators.html#module-networkx.generators.random_graphs)
+package.
 
 ------------------------------------------------------------------------
 
 ### create_random_graph
 
->      create_random_graph (n_nodes:int, prob:float, directed:bool=False,
->                           path_to:str|pathlib.Path=None, label:str=None)
+>      create_random_graph (generator:<built-infunctioncallable>,
+>                           obfuscate:bool=True, **kwargs)
+
+\*Thin wrapper around networkx’s random graph generator
+
+Args: generator (callable): networkx’s random graph generator
+\*\*kwargs: passed to generator Example: \>\>\> G =
+create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)\*
+
+``` python
+G = create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)
+```
+
+``` python
+G.nodes()
+```
+
+    NodeView(('S6QFO1ZOOD', 'V6F732N51S', 'DZ4QNV6LC6', 'D4POADW5GR', 'O5H4A5JYGS', 'XUB6AWP171', 'H7PL8A6NRT', 'XSA9A9HXBI', 'SF1UYD46BO', 'DQC077RYGA'))
+
+Create random graph and write it to the disk:
+
+------------------------------------------------------------------------
+
+### create_and_save_random_graph
+
+>      create_and_save_random_graph (generator:<built-infunctioncallable>,
+>                                    label:str, path_to:str|pathlib.Path,
+>                                    obfuscate:bool=True, **kwargs)
+
+\*Creates a random graph and saves it to path_to.
+
+Args: generator (callable): networkx’s random graph generator obfuscate
+(bool, optional): if true, obfuscates node names. Defaults to True.
+path_to (str|Path, optional): path to save the graph. Defaults to None.
+
+Example: \>\>\> create_random_graph_and_save(nx.erdos_renyi_graph, n=10,
+p=0.6, directed=False, path_to=path_data / ‘synthetic’ / ‘1.csv’)\*
 
 Create three layers. For experiments with CmmD algorithm we need at
 least several hundreds of nodes to see the difference in the clustering
@@ -63,12 +103,16 @@ path_dir_to.mkdir(exist_ok=True)
 ```
 
 ``` python
-n_nodes, prob, label = 300, 0.6, "first"
-create_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'first.csv', label=label)
+n, p, label = 300, 0.6, "first"
+create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '1.csv', n=n, p=p)
 
-n_nodes, prob, label = 500, 0.4, "second"
-create_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'second.csv', label=label)
+n, p, label = 500, 0.4, "second"
+create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '2.csv', n=n, p=p)
 
-n_nodes, prob, label = 400, 0.7, "third"
-create_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'third.csv', label=label)
+n, p, label = 400, 0.7, "third"
+create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '3.csv', n=n, p=p)
 ```
+
+The method above generates obfuscated graph with node labels different
+from layer to layer. However, for multilayer community analysis we need
+that at least some nodes share labels among layers.

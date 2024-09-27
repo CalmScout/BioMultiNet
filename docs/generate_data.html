@@ -224,6 +224,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#obfuscate_nodes" id="toc-obfuscate_nodes" class="nav-link" data-scroll-target="#obfuscate_nodes">obfuscate_nodes</a></li>
   <li><a href="#create_random_graph" id="toc-create_random_graph" class="nav-link" data-scroll-target="#create_random_graph">create_random_graph</a></li>
+  <li><a href="#create_and_save_random_graph" id="toc-create_and_save_random_graph" class="nav-link" data-scroll-target="#create_and_save_random_graph">create_and_save_random_graph</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/CalmScout/BioMultiNet/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="generate_data.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
@@ -273,46 +274,72 @@ window.Quarto = {
 <blockquote class="blockquote">
 <pre><code> obfuscate_nodes (n_nodes:int, str_len:int=10)</code></pre>
 </blockquote>
-<p><em>Maps nodes from range [0, n_nodes) to random strings of length str_len</em></p>
+<p><em>Maps nodes from range [0, n_nodes) to unique random strings of length str_len. All upper case letters and digits are used, starts with a letter.</em></p>
 <div id="cell-7" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> obfuscate_nodes(n_nodes<span class="op">=</span><span class="dv">10</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>{0: 'ZEERP9X9YZ',
- 1: 'I69P25FUZY',
- 2: 'NOZRBIZW72',
- 3: 'SYKL461WOA',
- 4: 'BT33J1VILM',
- 5: 'RSFHAXR3DU',
- 6: 'GS2WXNO1O8',
- 7: 'DB4VF0FH1C',
- 8: 'I8XOJYKED0',
- 9: 'SD11TMJSK0'}</code></pre>
+<pre><code>{0: 'TDM64O28SE',
+ 1: 'RM5SDNA1OK',
+ 2: 'QR899VV1BX',
+ 3: 'KY0DL1ZA12',
+ 4: 'LMJ97OFR4T',
+ 5: 'SF9IFSZ6FW',
+ 6: 'NPDRTOOGCO',
+ 7: 'Q2VY4N4GSM',
+ 8: 'XLRB0CDJQV',
+ 9: 'ZQDUOFQK5Z'}</code></pre>
 </div>
 </div>
+<p>The following is a thin wrapper around the random graph generators from <a href="https://networkx.org/documentation/stable/reference/generators.html#module-networkx.generators.random_graphs">networkx</a> package.</p>
 <hr>
 </section>
 <section id="create_random_graph" class="level3">
 <h3 class="anchored" data-anchor-id="create_random_graph">create_random_graph</h3>
 <blockquote class="blockquote">
-<pre><code> create_random_graph (n_nodes:int, prob:float, directed:bool=False,
-                      path_to:str|pathlib.Path=None, label:str=None)</code></pre>
+<pre><code> create_random_graph (generator:&lt;built-infunctioncallable&gt;,
+                      obfuscate:bool=True, **kwargs)</code></pre>
 </blockquote>
-<p>Create three layers. For experiments with CmmD algorithm we need at least several hundreds of nodes to see the difference in the clustering with a variety of <span class="math inline">\(\gamma\)</span> values:</p>
+<p>*Thin wrapper around networkx’s random graph generator</p>
+<p>Args: generator (callable): networkx’s random graph generator **kwargs: passed to generator Example: &gt;&gt;&gt; G = create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)*</p>
 <div id="cell-10" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>path_dir_to <span class="op">=</span> path_data <span class="op">/</span> <span class="st">'synthetic'</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>path_dir_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> create_random_graph(nx.erdos_renyi_graph, n<span class="op">=</span><span class="dv">10</span>, p<span class="op">=</span><span class="fl">0.6</span>, directed<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-11" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>n_nodes, prob, label <span class="op">=</span> <span class="dv">300</span>, <span class="fl">0.6</span>, <span class="st">"first"</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>create_random_graph(n_nodes<span class="op">=</span>n_nodes, prob<span class="op">=</span>prob, path_to<span class="op">=</span>path_dir_to <span class="op">/</span> <span class="st">'first.csv'</span>, label<span class="op">=</span>label)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>n_nodes, prob, label <span class="op">=</span> <span class="dv">500</span>, <span class="fl">0.4</span>, <span class="st">"second"</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>create_random_graph(n_nodes<span class="op">=</span>n_nodes, prob<span class="op">=</span>prob, path_to<span class="op">=</span>path_dir_to <span class="op">/</span> <span class="st">'second.csv'</span>, label<span class="op">=</span>label)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>n_nodes, prob, label <span class="op">=</span> <span class="dv">400</span>, <span class="fl">0.7</span>, <span class="st">"third"</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>create_random_graph(n_nodes<span class="op">=</span>n_nodes, prob<span class="op">=</span>prob, path_to<span class="op">=</span>path_dir_to <span class="op">/</span> <span class="st">'third.csv'</span>, label<span class="op">=</span>label)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>G.nodes()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<pre><code>NodeView(('S6QFO1ZOOD', 'V6F732N51S', 'DZ4QNV6LC6', 'D4POADW5GR', 'O5H4A5JYGS', 'XUB6AWP171', 'H7PL8A6NRT', 'XSA9A9HXBI', 'SF1UYD46BO', 'DQC077RYGA'))</code></pre>
 </div>
+</div>
+<p>Create random graph and write it to the disk:</p>
+<hr>
+</section>
+<section id="create_and_save_random_graph" class="level3">
+<h3 class="anchored" data-anchor-id="create_and_save_random_graph">create_and_save_random_graph</h3>
+<blockquote class="blockquote">
+<pre><code> create_and_save_random_graph (generator:&lt;built-infunctioncallable&gt;,
+                               label:str, path_to:str|pathlib.Path,
+                               obfuscate:bool=True, **kwargs)</code></pre>
+</blockquote>
+<p>*Creates a random graph and saves it to path_to.</p>
+<p>Args: generator (callable): networkx’s random graph generator obfuscate (bool, optional): if true, obfuscates node names. Defaults to True. path_to (str|Path, optional): path to save the graph. Defaults to None.</p>
+<p>Example: &gt;&gt;&gt; create_random_graph_and_save(nx.erdos_renyi_graph, n=10, p=0.6, directed=False, path_to=path_data / ‘synthetic’ / ‘1.csv’)*</p>
+<p>Create three layers. For experiments with CmmD algorithm we need at least several hundreds of nodes to see the difference in the clustering with a variety of <span class="math inline">\(\gamma\)</span> values:</p>
+<div id="cell-15" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>path_dir_to <span class="op">=</span> path_data <span class="op">/</span> <span class="st">'synthetic'</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>path_dir_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-16" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>n, p, label <span class="op">=</span> <span class="dv">300</span>, <span class="fl">0.6</span>, <span class="st">"first"</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to <span class="op">/</span> <span class="st">'1.csv'</span>, n<span class="op">=</span>n, p<span class="op">=</span>p)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>n, p, label <span class="op">=</span> <span class="dv">500</span>, <span class="fl">0.4</span>, <span class="st">"second"</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to <span class="op">/</span> <span class="st">'2.csv'</span>, n<span class="op">=</span>n, p<span class="op">=</span>p)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>n, p, label <span class="op">=</span> <span class="dv">400</span>, <span class="fl">0.7</span>, <span class="st">"third"</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to <span class="op">/</span> <span class="st">'3.csv'</span>, n<span class="op">=</span>n, p<span class="op">=</span>p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The method above generates obfuscated graph with node labels different from layer to layer. However, for multilayer community analysis we need that at least some nodes share labels among layers.</p>
 
 
 </section>
