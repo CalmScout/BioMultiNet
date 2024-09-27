@@ -1,0 +1,9 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 01_explore_pymnet.ipynb
+      - 02_generate_data.ipynb
+      - 03_download_data.ipynb
+      - 04_cmmd.ipynb
+      - 05_community_detection.ipynb

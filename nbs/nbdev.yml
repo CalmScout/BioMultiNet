@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "BioMultiNet"
+  site-url: "https://CalmScout.github.io/BioMultiNet"
+  description: "Applying multilayer networks to Life Science problems."
+  repo-branch: main
+  repo-url: "https://github.com/CalmScout/BioMultiNet"
