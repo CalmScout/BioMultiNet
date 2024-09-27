@@ -9,30 +9,31 @@ generalize graphs to capture the rich network data often associated with
 complex systems, allowing us to study a broad range of phenomena using a
 common representation, using the same multilayer tools and methods.
 Formally, a multilayer network M is defined as a quadruple
-$M = (V_M, E_M, V, L)$, where the sequence $L = (L_a)_{a=1}^d$ defines
-sets $L_a$ of elementary layers, the set $V$ defines the nodes of the
-network, the node-layers are
-$V_M \subseteq  V \times  L_1 \times  ... \times  L_d$, and the edges
-$E_M \subseteq  V_M \times  V_M$ are defined between node-layers. Put
-simply, a node-layer is an association of a node $v \in  V$ with a layer
-$\in  L \times ...\times  L$ of dimensionality $d$, nodes can exist on
-an arbitrary number of layers, and edges can connect node-layers within
-layers and across arbitrary pairs of layers, which can differ in an
-arbitrary number of dimensions. The dimensions $1, 2, ..., d$ are called
-the aspects of the network (e.g., a two-aspect transport network could
-have time as its first aspect and transport mode as its second
-aspect)(description from
+*M* = (*V*<sub>*M*</sub>, *E*<sub>*M*</sub>, *V*, *L*), where the
+sequence *L* = (*L*<sub>*a*</sub>)<sub>*a* = 1</sub><sup>*d*</sup>
+defines sets *L*<sub>*a*</sub> of elementary layers, the set *V* defines
+the nodes of the network, the node-layers are
+*V*<sub>*M*</sub> ⊆ *V* × *L*<sub>1</sub> × ... × *L*<sub>*d*</sub>, and
+the edges *E*<sub>*M*</sub> ⊆ *V*<sub>*M*</sub> × *V*<sub>*M*</sub> are
+defined between node-layers. Put simply, a node-layer is an association
+of a node *v* ∈ *V* with a layer  ∈ *L* × ... × *L* of dimensionality
+*d*, nodes can exist on an arbitrary number of layers, and edges can
+connect node-layers within layers and across arbitrary pairs of layers,
+which can differ in an arbitrary number of dimensions. The dimensions
+1, 2, ..., *d* are called the aspects of the network (e.g., a two-aspect
+transport network could have time as its first aspect and transport mode
+as its second aspect)(description from
 [pymnet](https://mnets.github.io/pymnet/overview.html) package).
 
 ## Roadmap
 
-- [ ] Generate small dataset and cover code by tests
-- [ ] Port implementation of CmmD algorithm from R to Python
-- [ ] Profile and optimize code (MNHACK24)
-- [ ] Explore alternatives to MolTi clustering
-- [ ] Reimplement Louvian clustering in Python, add additional community
+- ☐ Generate small dataset and cover code by tests
+- ☐ Port implementation of CmmD algorithm from R to Python
+- ☐ Profile and optimize code (MNHACK24)
+- ☐ Explore alternatives to MolTi clustering
+- ☐ Reimplement Louvian clustering in Python, add additional community
   detection algorithms
-- [ ] PyG integration
+- ☐ PyG integration
 
 ## Developer Guide
 

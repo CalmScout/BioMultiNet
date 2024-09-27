@@ -1,0 +1,252 @@
+[
+  {
+    "objectID": "cmmd.html",
+    "href": "cmmd.html",
+    "title": "CmmD: Continual Multiplex network Module Detector",
+    "section": "",
+    "text": "Python implementation of the algorithm originally proposed in “The multilayer community structure of medulloblastoma” by Iker Núñez-Carpintero et. al..\nImplementation relies on MolTi-DREAM for communities detection problem.",
+    "crumbs": [
+      "CmmD: Continual Multiplex network Module Detector"
+    ]
+  },
+  {
+    "objectID": "cmmd.html#import-libraries-and-define-paths",
+    "href": "cmmd.html#import-libraries-and-define-paths",
+    "title": "CmmD: Continual Multiplex network Module Detector",
+    "section": "0. Import libraries and define paths",
+    "text": "0. Import libraries and define paths\n\nimport os\nimport sys\nimport subprocess\nimport numpy as np\nfrom concurrent.futures import ThreadPoolExecutor\nfrom scipy.spatial.distance import pdist, squareform\n\n\ndef CmmD(nodelist=None, input_layers=None, resolution_start=None, resolution_end=None, interval=None, \n         distmethod=\"hamming\", threads=1, destfile_community_analysis=None):\n    \n    \"\"\"\n    Compute CmmD multilayer community trajectory analysis for a set of given networks.\n\n    Parameters\n    ----------\n    nodelist : list, optional\n        A list with the unique nodes that we want to appear in the final output. If not given, all nodes of the multiplex will be in the final output (nodelist= NULL)\n    input_layers : list\n        A vector of strings containing the paths where the different network layers are located in the system. Networks should be a two column file representing the edges of the graph.\n    resolution_start : float\n        The first gamma resolution parameter to use in the different MolTi's analysis\n    resolution_end : float\n        The last gamma resolution parameter to use in the different MolTi's analysis.\n    interval : float\n        The interval of the resolution parameter to use. \n    distmethod : str, optional\n        A distance method metric to use to compute the trajectories. Defaults to \"hamming\" for hamming distance, but accepts any other metric supplied by scipy.spatial.distance.pdist.\n    threads : int, optional\n        The number of threads to use for the computation of the distance matrix. Defaults to 1.\n    destfile_community_analysis : str, optional\n        The path to save Molti's output files. Defaults to \"Output/\".\n\n    Returns\n    -------\n    A dictionary containing the following keys:\n        gene_community_matrix: A matrix where the rows correspond to the different genes, and the columns to the different community structures. The values of the matrix are the cluster to which the gene belongs in the corresponding community structure.\n        l_constant: A dictionary where the keys are the different community structures, and the values are the list of genes that belong to that community structure.\n        distance_matrix: A matrix with the hamming distances between all pairs of genes.\n    \"\"\"\n    if input_layers is None or len(input_layers) &lt; 1:\n        raise ValueError(\"ERROR: Input_layers argument must be a list of at least 1 network file\")\n    \n    if not isinstance(resolution_end, (int, float)):\n        raise ValueError(\"ERROR: Resolution parameter must be a number\")\n    \n    if not isinstance(resolution_start, (int, float)):\n        raise ValueError(\"ERROR: Resolution parameter must be a number\")\n    \n    if not isinstance(interval, (int, float)):\n        raise ValueError(\"ERROR: Interval value must be a number\")\n    \n    if not isinstance(destfile_community_analysis, str):\n        raise ValueError(\"ERROR: destfile_community_analysis expects a character string\")\n    \n    if not isinstance(distmethod, str):\n        raise ValueError(\"ERROR: distmethod expects a character string\")\n    \n    if not isinstance(threads, int):\n        raise ValueError(\"ERROR: Threads must be a number corresponding to the number of cores available to use\")\n\n    # Prepare inputs to generate the console order for MolTi's run.\n    layers = \" \".join(input_layers)\n    print(f\"Resolution parameter starts at: {resolution_start}\")\n    print(f\"Resolution parameter ends at: {resolution_end}\")\n    \n    resolution_interval = np.arange(resolution_start, resolution_end + interval, interval)\n    desfile_vector = [f\"{destfile_community_analysis}{res}.csv\" for res in resolution_interval]\n    \n    print(\"Starting community analysis.\")\n    \n    for i, current_resolution in enumerate(resolution_interval):\n        current_destfile = desfile_vector[i]\n        print(f\"Resolution parameter: {current_resolution}\")\n        print(f\"{current_resolution}: {os.popen('date').read().strip()}\")\n        system_order = f\"molti-console -o {current_destfile} -p {current_resolution} {layers}\"\n        subprocess.run(system_order, shell=True)\n    \n    print(\"Reading MolTi output files. Calculating Gene/Community matrix\")\n    output_files = [f for f in os.listdir(destfile_community_analysis) if \"_\" not in f]\n    \n    alllists = []\n    \n    for output_file in output_files:\n        with open(os.path.join(destfile_community_analysis, output_file), 'r') as file:\n            red = file.readlines()\n        \n        cluster_ids = [i for i, line in enumerate(red) if \"Cluster\" in line]\n        lista = []\n        \n        for j, st in enumerate(cluster_ids):\n            if j == len(cluster_ids) - 1:\n                en = len(red)\n            else:\n                en = cluster_ids[j + 1]\n            current_cluster = red[st:en]\n            current_cluster2 = current_cluster[:-2] if j != len(cluster_ids) - 1 else current_cluster[:-1]\n            lista.append(current_cluster2[1:])\n        \n        alllists.append(lista)\n    \n    allgenes = list(set([gene for sublist in alllists for cluster in sublist for gene in cluster]))\n\n    if nodelist:\n        allgenes = list(set(allgenes).intersection(nodelist))\n    \n    print(\"Files read. Calculating Gene/Community matrix\")\n    res_matrix = np.zeros((len(allgenes), len(alllists) + 1), dtype=int)\n    gene_indices = {gene: idx for idx, gene in enumerate(allgenes)}\n    \n    for j, output_file_list in enumerate(alllists):\n        for k, cluster in enumerate(output_file_list):\n            for gene in cluster:\n                res_matrix[gene_indices[gene], j] = k + 1\n    \n    patterns = [\"_\".join(map(str, res_matrix[i, :-1])) for i in range(len(allgenes))]\n    res_matrix[:, -1] = np.array(patterns, dtype=str)\n    \n    porcentajes = np.linspace(0, 100, num=21)\n    \n    for i, percentage in enumerate(np.round(np.linspace(0, 100, len(allgenes)), 4)):\n        if percentage in porcentajes:\n            print(f\"Progress: {percentage}%\")\n    \n    print(\"Gene/Community matrix calculated, calculating Hamming distances for all gene pairs. This process may take a while...\")\n    \n    gene_community_matrix = res_matrix[:, :-1].astype(int)\n    genes_same_communities = {pattern: [] for pattern in np.unique(gene_community_matrix[:,-1])}\n    \n    for i, pattern in enumerate(gene_community_matrix[:,-1]):\n        genes_same_communities[pattern].append(allgenes[i])\n    \n    with ThreadPoolExecutor(max_workers=threads) as executor:\n        distance_matrix = squareform(pdist(gene_community_matrix, metric=distmethod))\n    \n    final_output = {\n        \"gene_community_matrix\": gene_community_matrix,\n        \"l_constant\": genes_same_communities,\n        \"distance_matrix\": distance_matrix\n    }\n    \n    return final_output\n\n\n# add \"../../Python/\" to path\nsys.path.append(\"../../Python/\")\n\nprefix = \"../../data/networks-tiny/\"\ninput_layers = [prefix + \"interactom.csv\",\n                prefix + \"reactom.csv\",\n                prefix + \"recon_3d.csv\"]\n\nCmmD(nodelist = None,\n     input_layers = input_layers,\n     resolution_start = 0,\n     resolution_end = 2,\n     interval = 1,\n     destfile_community_analysis = \"Output/\",\n     distmethod = \"hamming\",\n     threads = 6)",
+    "crumbs": [
+      "CmmD: Continual Multiplex network Module Detector"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "BioMultiNet",
+    "section": "",
+    "text": "Multilayer networks as defined by Kivelä et al. (2014) generalize graphs to capture the rich network data often associated with complex systems, allowing us to study a broad range of phenomena using a common representation, using the same multilayer tools and methods. Formally, a multilayer network M is defined as a quadruple \\(M = (V_M, E_M, V, L)\\), where the sequence \\(L = (L_a)_{a=1}^d\\) defines sets \\(L_a\\) of elementary layers, the set \\(V\\) defines the nodes of the network, the node-layers are \\(V_M \\subseteq  V \\times  L_1 \\times  ... \\times  L_d\\), and the edges \\(E_M \\subseteq  V_M \\times  V_M\\) are defined between node-layers. Put simply, a node-layer is an association of a node \\(v \\in  V\\) with a layer \\(\\in  L \\times ...\\times  L\\) of dimensionality \\(d\\), nodes can exist on an arbitrary number of layers, and edges can connect node-layers within layers and across arbitrary pairs of layers, which can differ in an arbitrary number of dimensions. The dimensions \\(1, 2, ..., d\\) are called the aspects of the network (e.g., a two-aspect transport network could have time as its first aspect and transport mode as its second aspect)(description from pymnet package).",
+    "crumbs": [
+      "BioMultiNet"
+    ]
+  },
+  {
+    "objectID": "index.html#roadmap",
+    "href": "index.html#roadmap",
+    "title": "BioMultiNet",
+    "section": "Roadmap",
+    "text": "Roadmap\n\nGenerate small dataset and cover code by tests\nPort implementation of CmmD algorithm from R to Python\nProfile and optimize code (MNHACK24)\nExplore alternatives to MolTi clustering\nReimplement Louvian clustering in Python, add additional community detection algorithms\nPyG integration",
+    "crumbs": [
+      "BioMultiNet"
+    ]
+  },
+  {
+    "objectID": "index.html#developer-guide",
+    "href": "index.html#developer-guide",
+    "title": "BioMultiNet",
+    "section": "Developer Guide",
+    "text": "Developer Guide\nIf you are new to using nbdev here are some useful pointers to get you started.\n\nInstall BioMultiNet in Development mode\n# make sure BioMultiNet package is installed in development mode\n$ pip install -e .\n\n# make changes under nbs/ directory\n# ...\n\n# compile to have changes apply to BioMultiNet\n$ nbdev_prepare",
+    "crumbs": [
+      "BioMultiNet"
+    ]
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "BioMultiNet",
+    "section": "Usage",
+    "text": "Usage\n\nInstallation\nInstall latest from the GitHub repository:\n$ pip install git+https://github.com/CalmScout/BioMultiNet.git\nor from conda\n$ conda install -c CalmScout BioMultiNet\nor from pypi\n$ pip install BioMultiNet\n\n\nDocumentation\nDocumentation can be found hosted on this GitHub repository’s pages. Additionally you can find package manager specific guidelines on conda and pypi respectively.",
+    "crumbs": [
+      "BioMultiNet"
+    ]
+  },
+  {
+    "objectID": "index.html#how-to-use",
+    "href": "index.html#how-to-use",
+    "title": "BioMultiNet",
+    "section": "How to use",
+    "text": "How to use\nExamples of utilization will be here:\n\n1+1\n\n2",
+    "crumbs": [
+      "BioMultiNet"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html",
+    "href": "explore_pymnet.html",
+    "title": "Exploration of pymnet capabilities",
+    "section": "",
+    "text": "Additional text can be added here and it will be reflected in the documentation.\n\nfrom pymnet import *\n\nnet_social = MultiplexNetwork(couplings=\"categorical\", fullyInterconnected=False)\nnet_social[\"Alice\", \"Bob\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Bob\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Bob\", \"Married\"] = 1\n\nfig_social = draw(net_social, layout=\"circular\", layerPadding=0.2, defaultLayerLabelLoc=(0.9,0.9))\n\n\n\n\n\n\n\n\nTime required to generate different networks:\n\nimport pymnet\nnet = pymnet.er(10, 10**5*[0.1])\n\n\nnet = pymnet.er(10**5,10*[10**-5])",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html#overview",
+    "href": "explore_pymnet.html#overview",
+    "title": "Exploration of pymnet capabilities",
+    "section": "",
+    "text": "Additional text can be added here and it will be reflected in the documentation.\n\nfrom pymnet import *\n\nnet_social = MultiplexNetwork(couplings=\"categorical\", fullyInterconnected=False)\nnet_social[\"Alice\", \"Bob\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Bob\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Bob\", \"Married\"] = 1\n\nfig_social = draw(net_social, layout=\"circular\", layerPadding=0.2, defaultLayerLabelLoc=(0.9,0.9))\n\n\n\n\n\n\n\n\nTime required to generate different networks:\n\nimport pymnet\nnet = pymnet.er(10, 10**5*[0.1])\n\n\nnet = pymnet.er(10**5,10*[10**-5])",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html#network-types",
+    "href": "explore_pymnet.html#network-types",
+    "title": "Exploration of pymnet capabilities",
+    "section": "2. Network types",
+    "text": "2. Network types\n\nMonoplex networks\nMonoplex networks have aspect value equals to 0.\n\nnet = pymnet.MultilayerNetwork(aspects=0)\n\n\nnet.add_node(1)\nnet.add_node(2)\n\n\nlist(net)\n\n[1, 2]\n\n\n\nnet[1].deg()\n\n0\n\n\nAdd edge:\n\nnet[1, 2] = 1\n\n\nnet[1, 3] = 1\nlist(net)\n\n[1, 2, 3]\n\n\n\nnet[1, 2], net[2, 1], net[1, 1]\n\n(1, 1, 0)\n\n\n\nlist(net[1])\n\n[2, 3]\n\n\n\nnet[1, 3] = 0\nlist(net[1])\n\n[2]\n\n\n\nnet[1, 3] = 2\nnet[1].deg()\n\n2\n\n\n\nlist(net[1])\n\n[2, 3]\n\n\n\nnet[1].strength()\n\n3\n\n\n\ndirnet = pymnet.MultilayerNetwork(aspects=0, directed=True)\n\ndirnet[1, 2] = 1\n\n\ndirnet[1, 2], dirnet[2, 1]\n\n(1, 0)\n\n\n\nnet[2, 1]\n\n1\n\n\n\n\nMultilayer networks\n\nmnet = pymnet.MultilayerNetwork(aspects=1)\n\n\nmnet.add_node(1)\nmnet.add_layer(\"a\")\n\n\nmnet[1, \"a\"].deg()\n\n0\n\n\n\nmnet[1, 2, \"a\", \"b\"] = 1\n\n\nmnet[1, \"a\"][2, \"b\"] = 1\n\n\nlist(mnet[1, \"a\"])\n\n[(2, 'b')]\n\n\n\nlist(mnet[1, \"b\"])\n\n[]\n\n\n\nlist(mnet)\n\n[1, 2]\n\n\nExamples of the multilayer net with several aspects:\n\nmnet2 = pymnet.MultilayerNetwork(aspects=2)\nmnet2[1, 2, \"a\" ,\"b\", \"x\" ,\"y\"] = 1\nmnet2[1, \"a\", \"x\"][2, \"b\", \"y\"]\n\n1\n\n\n\nlist(mnet2)\n\n[1, 2]\n\n\n\nlist(mnet2[1, \"a\", \"x\"])\n\n[(2, 'b', 'y')]\n\n\n\nmnet2.get_layers()\n\n{'a', 'b'}\n\n\n\nmnet2.add_layer(\"c\", 1)\nmnet2.add_layer(\"z\", 2)\n\n\nmnet2.get_layers()\n\n{'a', 'b', 'c'}\n\n\n\n\nMultiplex networks\n\nmplex = pymnet.MultiplexNetwork(couplings=\"none\")\n\n\nmplex[1, \"a\"][2, \"a\"] = 1\n\nCan access the intra-layer networks as follows:\n\nmplex.A[\"a\"][1, 2]\n\n1\n\n\n\nmplex.A[\"a\"][1, 3] = 1\n\n\ncnet = pymnet.MultiplexNetwork(couplings=\"categorical\")\ncnet.add_node(1)\ncnet.add_layer(\"a\")\ncnet.add_layer(\"b\")\ncnet[1, 1, \"a\", \"b\"]\n\n1.0\n\n\n\nonet = pymnet.MultiplexNetwork(couplings=\"ordinal\")\nonet.add_node(\"node\")\nonet.add_layer(1)\nonet.add_layer(2)\nonet.add_layer(3)\nonet[\"node\", \"node\", 1, 2]\n\n1.0\n\n\n\nonet[\"node\", \"node\", 1, 3]\n\n0\n\n\n\ncnet = pymnet.MultiplexNetwork(couplings=(\"categorical\", 10))\ncnet.add_node(1)\ncnet.add_layer(\"a\")\ncnet.add_layer(\"b\")\ncnet[1, 1, \"a\", \"b\"]\n\n10\n\n\n\nconet = pymnet.MultiplexNetwork(couplings=[\"categorical\", \"ordinal\"])\nconet.add_node(\"node\")\nconet.add_layer(\"a\", 1)\nconet.add_layer(\"b\", 1)\nconet.add_layer(1, 2)\nconet.add_layer(2, 2)\nconet.add_layer(3, 2)\nconet[\"node\", \"node\", \"a\", \"a\", 1, 2]\n\n1.0\n\n\n\nconet.A[(\"a\", 1)][\"node\", \"node2\"] = 1",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html#visualization-of-networks",
+    "href": "explore_pymnet.html#visualization-of-networks",
+    "title": "Exploration of pymnet capabilities",
+    "section": "3. Visualization of networks",
+    "text": "3. Visualization of networks\n\nimport random\nrandom.seed(42)\nimport numpy as np\nnp.random.seed(42)\n\n\nfrom pymnet import *\nnet = models.er_multilayer(5, 2, 0.2)\nfig = draw(net, layout=\"circular\", layerPadding=0.2, defaultLayerLabelLoc=(0.9,0.9))\n\n\n\n\n\n\n\n\n\nfig.savefig(\"er_multilayer.png\")\n\n\nfig = draw(er(10, 3*[0.5]), layout=\"spring\")\n\n\n\n\n\n\n\n\n\nfig = draw(er(10, 3*[0.3]),\n           layout=\"circular\",\n           layershape=\"circle\",\n           nodeColorDict={(0,0):\"r\", (1,0):\"r\", (0,1):\"r\"},\n           layerLabelRule={},\n           nodeLabelRule={},\n           nodeSizeRule={\"rule\":\"degree\", \"propscale\":0.05}\n           )\n\n\n\n\n\n\n\n\n\nimport requests\ndataset = \"bkfrat.dat\"\nfraternity_dataset_url = f\"http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/{dataset}\"\nres = requests.get(fraternity_dataset_url)\nwith open(dataset, \"wb\") as f:\n    f.write(res.content)\n\n\nnet = read_ucinet(dataset, couplings=\"none\")\nnet = transforms.threshold(net, 4)\nfig = draw(net,\n           layout=\"spring\",\n           layerColorRule={},\n           defaultLayerColor=\"silver\",\n           nodeLabelRule={},\n           edgeColorRule={\"rule\":\"edgeweight\", \"colormap\":\"viridis\", \"scaleby\":0.1},\n           defaultLayerLabelLoc=(0.9,0.9)\n           )",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html#isomorphysms-and-automorphisms",
+    "href": "explore_pymnet.html#isomorphysms-and-automorphisms",
+    "title": "Exploration of pymnet capabilities",
+    "section": "4. Isomorphysms and automorphisms",
+    "text": "4. Isomorphysms and automorphisms\n\nSetup\n\nfrom pymnet import *\nnet_social = MultiplexNetwork(couplings=\"categorical\", fullyInterconnected=False)\nnet_social[\"Alice\", \"Bob\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Bob\", \"Carol\", \"Friends\"] = 1\nnet_social[\"Alice\", \"Bob\", \"Married\"] = 1\n# net_social[\"John\", \"Bob\", \"Bussiness\"] = 1\nfig_social = draw(net_social, layout=\"circular\", layerPadding=0.2, defaultLayerLabelLoc=(0.9,0.9))\n\n\n\n\n\n\n\n\n\nnet_transport = MultiplexNetwork(couplings=\"categorical\", fullyInterconnected=False)\nnet_transport[\"Helsinki\", \"Turku\", \"Train\"] = 1\nnet_transport[\"Helsinki\", \"Tampere\", \"Train\"] = 1\nnet_transport[\"Turku\", \"Tampere\", \"Train\"] = 1\nnet_transport[\"Helsinki\", \"Turku\", \"Ferry\"] = 1\nfig_transport = draw(net_transport, layout=\"circular\", layerPadding=0.2, defaultLayerLabelLoc=(0.9,0.9))\n\n\n\n\n\n\n\n\n\n\nIsomorphisms\n\n# node isomorphism\nis_isomorphic(net_social, net_transport, allowed_aspects=[0])\n\nFalse\n\n\n\n# layer isomorphism\nis_isomorphic(net_transport, net_social, allowed_aspects=[1])\n\nFalse\n\n\n\n# node-layer isomorphism\nis_isomorphic(net_transport, net_social, allowed_aspects=[0, 1])\n\nTrue\n\n\n\nget_isomorphism(net_transport, net_social)\n\n[{'Helsinki': 'Bob', 'Tampere': 'Carol', 'Turku': 'Alice'},\n {'Ferry': 'Married', 'Train': 'Friends'}]\n\n\n\nnet_social_complete_invariant = get_complete_invariant(net_social)\nnet_transport_complete_invariant = get_complete_invariant(net_transport)\nprint(net_social_complete_invariant, net_transport_complete_invariant)\n\n((((), 0),), &lt;bliss_bind.NamedGraph object&gt;) ((((), 0),), &lt;bliss_bind.NamedGraph object&gt;)\n\n\n\n\nAutomorphisms\n\n# node isomorphism\nget_automorphism_generators(net_social, allowed_aspects=[0])\n\n[[{'Bob': 'Alice', 'Alice': 'Bob'}, {}]]\n\n\n\n# layer isomorphism\nget_automorphism_generators(net_social, allowed_aspects=[1])\n\n[]\n\n\n\n# node-layer isomorphism\nget_automorphism_generators(net_social, allowed_aspects=[0, 1])\n\n[[{'Bob': 'Alice', 'Alice': 'Bob'}, {}]]\n\n\n\nnet = MultilayerNetwork(aspects=1)\nnet[1, \"A\"][2, \"A\"] = 1\nnet[2, \"A\"][3, \"A\"] = 1\nnet[3, \"B\"][2, \"B\"] = 1\nnet[2, \"B\"][1, \"B\"] = 1\nnet[3, \"A\"][1, \"B\"] = 1\nfig = draw(net, layerPadding=0.2)\n\n\n\n\n\n\n\n\n\nget_automorphism_generators(net, allowed_aspects=[0])\n\n[]\n\n\n\nget_automorphism_generators(net, allowed_aspects=[1])\n\n[]\n\n\n\nget_automorphism_generators(net, allowed_aspects=[0, 1])\n\n[[{1: 3, 3: 1}, {'A': 'B', 'B': 'A'}]]",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "explore_pymnet.html#using-networkx-functions",
+    "href": "explore_pymnet.html#using-networkx-functions",
+    "title": "Exploration of pymnet capabilities",
+    "section": "5. Using NetworkX functions",
+    "text": "5. Using NetworkX functions\n\nfrom pymnet import nx\n\n\nnet = nx.karate_club_graph()\n\n\ntype(net)\n\npymnet.net.MultilayerNetwork\n\n\n\nnet.aspects\n\n0\n\n\n\nimport random\nrandom.seed(42)\n\n\nimport pymnet\n{name: nx.number_connected_components(layer) for name, layer in pymnet.er(1000, 3*[0.005]).A.items()}\n\n{0: 10, 1: 9, 2: 5}",
+    "crumbs": [
+      "Exploration of `pymnet` capabilities"
+    ]
+  },
+  {
+    "objectID": "community_detection.html#load-multilayer-network-to-pymnet",
+    "href": "community_detection.html#load-multilayer-network-to-pymnet",
+    "title": "Community detection",
+    "section": "1. Load multilayer network to pymnet",
+    "text": "1. Load multilayer network to pymnet\nLet’s explore data structure",
+    "crumbs": [
+      "Community detection"
+    ]
+  },
+  {
+    "objectID": "community_detection.html#community-detection-algorithms",
+    "href": "community_detection.html#community-detection-algorithms",
+    "title": "Community detection",
+    "section": "2. Community detection algorithms",
+    "text": "2. Community detection algorithms\nThere are different algorithms for community detection in a multilayer networks.",
+    "crumbs": [
+      "Community detection"
+    ]
+  },
+  {
+    "objectID": "generate_data.html",
+    "href": "generate_data.html",
+    "title": "Dataset generation",
+    "section": "",
+    "text": "There are several approaches to generate data to start work with multilayer networks:",
+    "crumbs": [
+      "Dataset generation"
+    ]
+  },
+  {
+    "objectID": "generate_data.html#imports-and-paths",
+    "href": "generate_data.html#imports-and-paths",
+    "title": "Dataset generation",
+    "section": "0. Imports and paths",
+    "text": "0. Imports and paths\n\npath_data = Path(\"../data\")\npath_data.mkdir(exist_ok=True)",
+    "crumbs": [
+      "Dataset generation"
+    ]
+  },
+  {
+    "objectID": "generate_data.html#generate-synthetic-dataset",
+    "href": "generate_data.html#generate-synthetic-dataset",
+    "title": "Dataset generation",
+    "section": "1. Generate synthetic dataset",
+    "text": "1. Generate synthetic dataset\nCreate a small multilayer graph for testing purposes.\n\n\nobfuscate_nodes\n\n obfuscate_nodes (n_nodes:int, str_len:int=10)\n\nMaps nodes from range [0, n_nodes) to random strings of length str_len\n\nd = obfuscate_nodes(n_nodes=10)\nd\n\n{0: 'ZEERP9X9YZ',\n 1: 'I69P25FUZY',\n 2: 'NOZRBIZW72',\n 3: 'SYKL461WOA',\n 4: 'BT33J1VILM',\n 5: 'RSFHAXR3DU',\n 6: 'GS2WXNO1O8',\n 7: 'DB4VF0FH1C',\n 8: 'I8XOJYKED0',\n 9: 'SD11TMJSK0'}\n\n\n\n\n\ncreate_random_graph\n\n create_random_graph (n_nodes:int, prob:float, directed:bool=False,\n                      path_to:str|pathlib.Path=None, label:str=None)\n\nCreate three layers. For experiments with CmmD algorithm we need at least several hundreds of nodes to see the difference in the clustering with a variety of \\(\\gamma\\) values:\n\npath_dir_to = path_data / 'synthetic'\npath_dir_to.mkdir(exist_ok=True)\n\n\nn_nodes, prob, label = 300, 0.6, \"first\"\ncreate_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'first.csv', label=label)\n\nn_nodes, prob, label = 500, 0.4, \"second\"\ncreate_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'second.csv', label=label)\n\nn_nodes, prob, label = 400, 0.7, \"third\"\ncreate_random_graph(n_nodes=n_nodes, prob=prob, path_to=path_dir_to / 'third.csv', label=label)",
+    "crumbs": [
+      "Dataset generation"
+    ]
+  },
+  {
+    "objectID": "download_data.html",
+    "href": "download_data.html",
+    "title": "Downloading biological data",
+    "section": "",
+    "text": "Below is the adaptation of the part of the MultilayerNexus project for downloading various biological datasets.",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#import-required-packages",
+    "href": "download_data.html#import-required-packages",
+    "title": "Downloading biological data",
+    "section": "0. Import required packages",
+    "text": "0. Import required packages\n\nimport requests\nimport zipfile\nfrom datetime import datetime\nfrom tqdm import tqdm\nimport json\nfrom pathlib import Path\nimport os\nfrom itertools import combinations\nimport re\nimport pandas as pd\nimport ast\nimport rdflib\nimport multiprocessing\nfrom joblib import Parallel, delayed\nimport gzip\nimport shutil\nimport cobra\nimport urllib.request\nfrom collections import defaultdict",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#biogrig-interactions",
+    "href": "download_data.html#biogrig-interactions",
+    "title": "Downloading biological data",
+    "section": "1. BioGRIG interactions",
+    "text": "1. BioGRIG interactions\n\nprotein_interaction_techniques = {\n    \"Affinity Capture-Luminescence\",\n    \"Affinity Capture-MS\",\n    \"Affinity Capture-Western\",\n    \"Biochemical Activity\",\n    \"Co-crystal Structure\",\n    \"Co-fractionation\",\n    \"Co-localization\",\n    \"Co-purification\",\n    \"Far Western\",\n    \"FRET\",\n    \"PCA\",\n    \"Protein-peptide\",\n    \"Reconstituted Complex\",\n    \"Two-hybrid\",\n}\n\ndef ensure_dir(file_path):\n   file_path.parent.mkdir(parents=True, exist_ok=True)\n\ndef download_file(url, path, file_size):\n    ensure_dir(path)\n    chunk_size = 1024  # 1KB\n    with requests.get(url, stream=True) as r, open(path, 'wb') as f, tqdm(\n            unit='B',\n            unit_scale=True,\n            total=file_size,\n            desc=str(path)\n    ) as progress:\n        for chunk in r.iter_content(chunk_size=chunk_size):\n            datasize = f.write(chunk)\n            progress.update(datasize)\n\n\ndate = datetime.now().strftime(\"%d-%m-%Y\")\nrelease = '4.4.231'\nbase_path = Path('../data/multilayer_network/raw')\nzip_path = base_path / f'BIOGRID-ORGANISM-{release}.tab3.zip'\nspecific_file = f'BIOGRID-ORGANISM-Homo_sapiens-{release}.tab3.txt'\ntxt_path = base_path / specific_file\noutput_json_path = Path(f'../data/multilayer_network/processed/BioGRID_interactions.{date}.json')\n\nurl = f'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive/BIOGRID-{release}/BIOGRID-ORGANISM-{release}.tab3.zip'\n\nfile_size = int(requests.head(url).headers.get('content-length', 0))\n\ndownload_file(url, zip_path, file_size)\n\nwith zipfile.ZipFile(zip_path, 'r') as zip_ref:\n    zip_ref.extract(specific_file, base_path)\nos.remove(zip_path)\n\nnodes = {}\nedges = []\n\nwith open(txt_path, 'r') as file:\n    next(file)  # Skip header\n    for line in file:\n        cols = line.strip().split('\\t')\n        if cols[15] == cols[16] == \"9606\" and cols[11] in protein_interaction_techniques:\n            int1, int2 = cols[7], cols[8]\n            nodes[int1] = {\"label\": int1, \"type\": \"protein\"}\n            nodes[int2] = {\"label\": int2, \"type\": \"protein\"}\n            edges.append({\"source\": int1, \"target\": int2, \"attributes\": {\"Interaction Type\": cols[12], \"Experimental System\": cols[11]}})\n\nnodes_list = [{\"id\": k, **v} for k, v in nodes.items()]\nfinal_structure = {\"nodes\": nodes_list, \"edges\": edges}\n\nensure_dir(output_json_path)\n\nwith open(output_json_path, 'w') as json_file:\n    json.dump(final_structure, json_file, indent=4)\n\nprint(f\"Interaction graph created and saved as JSON at {output_json_path}\")\n\n../data/multilayer_network/raw/BIOGRID-ORGANISM-4.4.231.tab3.zip: 169MB [00:11, 15.1MB/s] \n\n\nInteraction graph created and saved as JSON at ../data/multilayer_network/processed/BioGRID_interactions.23-09-2024.json",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#kegg-drugs",
+    "href": "download_data.html#kegg-drugs",
+    "title": "Downloading biological data",
+    "section": "2. KEGG drugs",
+    "text": "2. KEGG drugs\n\ndef download_file_with_progress(url, filename):\n    with requests.get(url, stream=True) as r:\n        r.raise_for_status()\n        file_size = int(r.headers.get('content-length', 0))\n        chunk_size = max(4096, file_size // 100)\n        with open(filename, 'wb') as file_out, tqdm(\n            total=file_size, unit='B', unit_scale=True, desc=str(filename)\n        ) as pbar:\n            for chunk in r.iter_content(chunk_size=chunk_size):\n                file_out.write(chunk)\n                pbar.update(len(chunk))\n\ndate = datetime.now().strftime(\"%d-%m-%Y\")\nrelease = 'br08310'\nurl = f'https://www.genome.jp/kegg-bin/download_htext?htext={release}.keg&format=json&filedir='\n\ndata_dir = Path('../data/multilayer_network/raw')\ndata_dir.mkdir(parents=True, exist_ok=True)\ndownload_file_with_progress(url, data_dir / f'{release}.json')\n\ndef extract_drugs_and_receptors(node, drug_to_receptors):\n    if 'children' in node:\n        if 'name' in node and '[' in node['name']:\n            receptor_name = re.sub(r'\\s*\\(.*?\\)\\s*', '', node['name'].split('[')[0].strip()).replace('*', '')\n            for drug in node.get('children', []):\n                drug_id, _, drug_name = drug['name'].partition(' ')\n                drug_name = drug_name.lstrip()\n                drug_to_receptors.setdefault(drug_id, {'receptors': [], 'drug_name': drug_name}).get('receptors').append(receptor_name)\n        else:\n            for child in node.get('children', []):\n                extract_drugs_and_receptors(child, drug_to_receptors)\n\ndrug_to_receptors = {}\nextract_drugs_and_receptors(json.loads((data_dir / f'{release}.json').read_text()), drug_to_receptors)\n\noutput = {\n    \"nodes\": [\n        {\"id\": receptor, \"label\": receptor, \"type\": \"protein\"} for receptor in {receptor for info in drug_to_receptors.values() for receptor in info['receptors']}\n    ],\n    \"edges\": [\n        {\"source\": src, \"target\": tgt, \"attributes\": {\"Drug ID\": drug_id, \"Drug Name\": info['drug_name']}}\n        for drug_id, info in drug_to_receptors.items() for src, tgt in combinations(set(info['receptors']), 2)\n    ]\n}\n\noutput_path = Path('../data/multilayer_network/processed') / f'KEGG_drugs.{date}.json'\noutput_path.parent.mkdir(parents=True, exist_ok=True)\noutput_path.write_text(json.dumps(output, indent=4))\n\nprint(f\"JSON file created at {output_path}\")\n\n../data/multilayer_network/raw/br08310.json: 675kB [00:03, 207kB/s] \n\n\nJSON file created at ../data/multilayer_network/processed/KEGG_drugs.23-09-2024.json",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#mondo-diseases",
+    "href": "download_data.html#mondo-diseases",
+    "title": "Downloading biological data",
+    "section": "3. MONDO diseases",
+    "text": "3. MONDO diseases\nURL address http://purl.obolibrary.org/obo/mondo.owl contains a 215 MB ontology, however the cell below doesn’t create any processed dataset. Changed schema?\n\ndef download_file(url, filename):\n    with requests.get(url, stream=True) as r:\n        r.raise_for_status()\n        total_size_in_bytes = int(r.headers.get('content-length', 0))\n        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True, desc=\"Downloading ontology\")\n        with open(filename, 'wb') as file:\n            for chunk in r.iter_content(chunk_size=1024):\n                progress_bar.update(file.write(chunk))\n        progress_bar.close()\n\ndef extract_mondo2omim(g):\n    rdfl = rdflib.Namespace('http://www.w3.org/2000/01/rdf-schema#')\n    owl = rdflib.Namespace('http://www.w3.org/2002/07/owl#')\n    oboInOwl = rdflib.Namespace('http://www.geneontology.org/formats/oboInOwl#')\n    mondo2omim = {}\n    mondo2descr = {}\n\n    for subj in tqdm(g.subjects(), desc=\"Extracting subjects\"):\n        for i in g.triples((subj, owl['annotatedSource'], None)):\n            mondo = i[2]\n            mondoID = mondo.toPython().rsplit('/', 1)[-1]\n            for j in g.triples((mondo, rdfl['label'], None)):\n                descr = j[2].toPython()\n                mondo2descr[mondoID] = descr\n            for w in g.triples((mondo, oboInOwl['hasDbXref'], None)):\n                if w[2].startswith(rdflib.Literal('OMIM:')):\n                    omim = w[2].toPython()\n                    mondo2omim[mondoID] = omim\n    return mondo2omim, mondo2descr\n\ndef fetch_genes(url):\n    try:\n        df = pd.read_csv(url, sep='\\t', header=0).dropna(subset=['evidence'])\n        df = df[df['subject_taxon_label'].str.contains('Homo sapiens', na=False)]\n        genes = df[df['evidence'].str.contains('ECO:0000220')].subject_label.unique().tolist()\n        return genes\n    except Exception as e:\n        print(f\"Failed to fetch genes from URL: {url} due to {e}\")\n        return []\n\ndef generate_json(mondo2genes, mondo2descr, output_file):\n    nodes = [{\"id\": gene, \"label\": gene, \"type\": \"gene\"} for gene_list in mondo2genes.values() for gene in gene_list]\n    edges = [{\"source\": gene_pair[0], \"target\": gene_pair[1], \"attributes\": {\"MONDO Identifier\": mondo, \"Description\": mondo2descr[mondo]}} \n             for mondo, genes in mondo2genes.items() for gene_pair in combinations(genes, 2)]\n\n    final_json = {\"nodes\": list({v['id']:v for v in nodes}.values()), \"edges\": edges}\n    with open(output_file, 'w') as json_file:\n        json.dump(final_json, json_file, indent=4)\n\nurl = 'http://purl.obolibrary.org/obo/mondo.owl'\nfilename = '../data/multilayer_network/raw/mondo.owl'\noutput_path = Path(\"../data/multilayer_network/processed/MoNDO_diseases.\" + datetime.now().strftime(\"%d-%m-%Y\") + \".json\")\n\n\ndownload_file(url, filename)\ng = rdflib.Graph()\n# g.load(filename)\ng.parse(filename)\nmondo2omim, mondo2descr = extract_mondo2omim(g)\n    \ninputs = [f\"https://solr.monarchinitiative.org/solr/golr/select/?defType=edismax&qt=standard&indent=on&wt=csv&rows=100000&start=0&fl=subject,subject_label,subject_taxon,subject_taxon_label,object,object_label,relation,relation_label,evidence,evidence_label,source,is_defined_by,qualifier&facet=true&facet.mincount=1&facet.sort=count&json.nl=arrarr&facet.limit=25&facet.method=enum&csv.encapsulator=%22&csv.separator=%09&csv.header=true&csv.mv.separator=%7C&fq=subject_category:%22gene%22&fq=object_category:%22disease%22&fq=object_closure:%22{mondo.replace('_', ':')}%22&facet.field=subject_taxon_label&q=*:*\" for mondo in mondo2omim.keys()]\nwith multiprocessing.Pool() as pool:\n    genes_list = list(tqdm(pool.imap(fetch_genes, inputs), total=len(inputs), desc=\"Fetching genes\"))\n    \nmondo2genes = {mondo: genes for mondo, genes in zip(mondo2omim.keys(), genes_list) if genes}\ngenerate_json(mondo2genes, mondo2descr, output_path)\nprint(f\"Generated JSON file at {output_path}\")",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#reactome-pathways",
+    "href": "download_data.html#reactome-pathways",
+    "title": "Downloading biological data",
+    "section": "4. Reactome pathways",
+    "text": "4. Reactome pathways\n\nnow = datetime.now()\n\n# Download Uniprot id mapping\nurl = \"https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping.dat.gz\"\nresponse = requests.get(url)\nfilename = 'data/multilayer_network/raw/HUMAN_9606_idmapping.dat.gz'\noutname = 'data/multilayer_network/raw/HUMAN_9606_idmapping.dat'\nwith open(filename, 'wb') as file:\n    file.write(response.content)\nwith gzip.open(filename, 'rb') as f_in:\n    with open(outname, 'wb') as f_out:\n        shutil.copyfileobj(f_in, f_out)\nos.remove(filename)\nmapping_dict = {}\nwith open(outname, 'r') as file:\n    for line in file:\n        parts = line.strip().split()\n        uni_id, identifier_type, value = parts[0], parts[1], ' '.join(parts[2:])\n        if identifier_type == 'Gene_Name':\n            mapping_dict[uni_id] = value\n\n# Download Reactome lowest levels\nurl = 'https://reactome.org/download/current/UniProt2Reactome.txt'\nresponse = requests.get(url)\nfilename = 'data/multilayer_network/raw/UniProt2Reactome.txt'\nwith open(filename, 'wb') as file:\n    file.write(response.content)\n\nnodes = []\nedges = []\n\nreactome = {}\ndescr_dict = {}\nwith open(filename, 'r') as file:\n    for line in file:\n        line = line.strip()\n        parts = line.split('\\t')\n        if len(parts) &lt; 6:\n            continue  # Skip incomplete lines\n        prot, pathway, descr, ec, taxo = parts[0], parts[1], parts[3], parts[4], parts[5]\n        descr_dict[pathway] = descr\n        if taxo != \"Homo sapiens\":\n            continue\n        # Skip certain evidence codes if needed\n        # if ec not in [\"EXP\", \"IDA\", \"IPI\", \"IMP\", \"IGI\", \"IEP\"]:\n        #    continue\n        if pathway not in reactome:\n            reactome[pathway] = []\n        if prot not in reactome[pathway]:\n            try:\n                gene = mapping_dict[prot]\n            except:\n                gene = prot\n            reactome[pathway].append(gene)\n        if gene not in [node['id'] for node in nodes]:\n            nodes.append({\n                \"id\": gene,\n                \"label\": gene,\n                \"type\": \"protein\"\n            })\n\nfor k,v in reactome.items():\n    if len(v) &gt; 1:\n        for gene_pair in combinations(v, 2):\n            edges.append({\n                \"source\": gene_pair[0],\n                \"target\": gene_pair[1],\n                \"attributes\": {\n                    \"Reactome Identifier\": k,\n                    \"Description\": descr_dict[k]\n                }\n            })\n\nfinal_json = {\"nodes\": nodes, \"edges\": edges}\nfile_name = \"data/multilayer_network/processed/Reactome_pathways.\" + now.strftime(\"%d-%m-%Y\") + \".json\"\nwith open(file_name, 'w') as json_file:\n    json.dump(final_json, json_file, indent=4)",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  },
+  {
+    "objectID": "download_data.html#recon3d-metabolites",
+    "href": "download_data.html#recon3d-metabolites",
+    "title": "Downloading biological data",
+    "section": "5. Recon3D metabolites",
+    "text": "5. Recon3D metabolites\n\n# Use the current timestamp for naming the output file later\nnow = datetime.now().strftime(\"%d-%m-%Y\")\n\n# Function to download and decompress the model file\ndef download_and_decompress(url, output_path):\n    with urllib.request.urlopen(url) as response, open(output_path, 'wb') as out_file:\n        out_file.write(gzip.decompress(response.read()))\n\n# Define URLs and file paths\nmodel_url = 'http://bigg.ucsd.edu/static/models/Recon3D.xml.gz'\nmodel_file_path = 'data/multilayer_network/raw/Recon3D.xml'\nmetabolites_file_path = 'src/metabolites_to_prune.txt'\n\n# Download and import the Recon3D model\ndownload_and_decompress(model_url, model_file_path)\nmodel = cobra.io.read_sbml_model(model_file_path)\n\n# Import the metabolites to prune\nwith open(metabolites_file_path) as f:\n    remove_metabolites = [line.split(' ')[0].strip() for line in f]\n\n# Function to process metabolites and genes\ndef process_metabolites_and_genes(model, remove_metabolites):\n    products_dict, reactants_dict, metabo_name_dict = defaultdict(list), defaultdict(list), {}\n    gene_pattern, metabo_pattern = r'__[clmerginx]$', r'__\\d+__\\d+$'\n\n    for reaction in model.reactions:\n        for gene in filter(lambda g: g.id.split('_')[0] != \"0\", reaction.genes):\n            gene_id = gene.id.split('_')[0]\n            for metabolite_group, metabolites in (('products', reaction.products), ('reactants', reaction.reactants)):\n                for metabolite in metabolites:\n                    metabo_id = re.sub(gene_pattern, '', metabolite.id)\n                    metabo_name_dict[metabo_id] = metabolite.name\n                    if gene_id not in (products_dict if metabolite_group == 'products' else reactants_dict)[metabo_id]:\n                        (products_dict if metabolite_group == 'products' else reactants_dict)[metabo_id].append(gene.name)\n\n    metabolites_dict = defaultdict(list)\n    for metabo_id, genes in {**products_dict, **reactants_dict}.items():\n        if metabo_id not in remove_metabolites:\n            metabolites_dict[re.sub(metabo_pattern, '', metabo_id)].extend(set(genes))\n\n    return {k: list(set(v)) for k, v in metabolites_dict.items()}, metabo_name_dict\n\nmetabolites_dict, metabo_name_dict = process_metabolites_and_genes(model, remove_metabolites)\n\n# Preparing data for JSON output\nnodes = [{\"id\": gene, \"label\": gene, \"type\": \"protein\"} for gene in set(gene for genes in metabolites_dict.values() for gene in genes)]\nedges = [{\n    \"source\": gene_pair[0],\n    \"target\": gene_pair[1],\n    \"attributes\": {\"Metabolite\": metabo, \"Descriptive name\": metabo_name_dict[metabo]}\n} for metabo, genes in metabolites_dict.items() for gene_pair in combinations(genes, 2)]\n\n# Saving the graph to a JSON file\noutput_file_path = f'data/multilayer_network/processed/Recon3D_metabolites.{now}.json'\nwith open(output_file_path, 'w') as f:\n    json.dump({\"nodes\": nodes, \"edges\": edges}, f, indent=4)\n\nprint(f\"Graph saved to {output_file_path}\")",
+    "crumbs": [
+      "Downloading biological data"
+    ]
+  }
+]
