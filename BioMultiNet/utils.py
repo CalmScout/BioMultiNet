@@ -11,27 +11,54 @@ import random
 import string
 
 # %% ../nbs/02_generate_data.ipynb 9
-def obfuscate_nodes(n_nodes:int, str_len:int=10) -> dict:
+def obfuscate_nodes(n_nodes:int,
+                    node_labels_pool:list[str]=None,
+                    str_len:int=10) -> dict:
     """
     Maps nodes from range [0, n_nodes) to unique random strings of length str_len.
     All upper case letters and digits are used, starts with a letter.
+    If node_labels_pool is provided, nodes selected from it if len(node_labels_pool) >= n_nodes,
+    otherwise, additional unique nodes are generated.
     """
+    if node_labels_pool is not None:
+        assert len(node_labels_pool[0]) == str_len
+    
     def encode(str_len):
         return ''.join(random.choices(string.ascii_uppercase, k=1)) +\
                ''.join(random.choices(string.ascii_uppercase + string.digits, k=(str_len-1)))
     
-    d = {}
-    for i in range(n_nodes):
-        x = encode(str_len)
-        # gaurantee uniqueness
-        while x in d.values():
+    if node_labels_pool is not None:
+        if len(node_labels_pool) >= n_nodes:
+            # select random nodes from node_labels_pool
+            random.shuffle(node_labels_pool)
+            vals = node_labels_pool[:n_nodes]
+            d = dict(zip(range(n_nodes), vals))
+        elif len(node_labels_pool) < n_nodes:
+            # use all nodes from node_labels_pool
+            random.shuffle(node_labels_pool)
+            vals = node_labels_pool[:]
+            # generate additional unique nodes
+            for i in range(n_nodes - len(node_labels_pool)):
+                x = encode(str_len)
+                while x in vals: # guarantee uniqueness
+                    x = encode(str_len)
+                vals.append(x)
+            # shuffle pre-defined and newly generated nodes
+            random.shuffle(vals)
+            d = dict(zip(range(n_nodes), vals))
+    else:   # no node_labels_pool provided
+        d = {}
+        for i in range(n_nodes):
             x = encode(str_len)
-        
-        d[i] = x
+            # gaurantee uniqueness
+            while x in d.values():
+                x = encode(str_len)
+            
+            d[i] = x
     
     return d
 
-# %% ../nbs/02_generate_data.ipynb 12
+# %% ../nbs/02_generate_data.ipynb 14
 def create_random_graph(generator:callable, obfuscate:bool=True, **kwargs):
     """Thin wrapper around networkx's random graph generator
 
@@ -46,9 +73,9 @@ def create_random_graph(generator:callable, obfuscate:bool=True, **kwargs):
         G = nx.relabel_nodes(G, obfuscate_nodes(G.number_of_nodes()))
     return G
 
-# %% ../nbs/02_generate_data.ipynb 16
+# %% ../nbs/02_generate_data.ipynb 18
 def create_and_save_random_graph(generator:callable,
-                                 label:str,
+                                 label_edges:str,
                                  path_to:str|Path,
                                  obfuscate:bool=True,
                                  **kwargs):
@@ -69,4 +96,4 @@ def create_and_save_random_graph(generator:callable,
     with open(path_to, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=' ')
         for edge in edges:
-            writer.writerow([edge[0], edge[1], label])
+            writer.writerow([edge[0], edge[1], label_edges])
