@@ -20,7 +20,7 @@ def obfuscate_nodes(n_nodes:int,
     If node_labels_pool is provided, nodes selected from it if len(node_labels_pool) >= n_nodes,
     otherwise, additional unique nodes are generated.
     """
-    if node_labels_pool is not None:
+    if node_labels_pool is not None and len(node_labels_pool) > 0:
         assert len(node_labels_pool[0]) == str_len
     
     def encode(str_len):
@@ -59,7 +59,7 @@ def obfuscate_nodes(n_nodes:int,
     return d
 
 # %% ../nbs/02_generate_data.ipynb 14
-def create_random_graph(generator:callable, obfuscate:bool=True, **kwargs):
+def create_random_graph(generator:callable, obfuscate:bool=True, node_labels_pool:list[str]=None, **kwargs):
     """Thin wrapper around networkx's random graph generator
 
     Args:
@@ -70,15 +70,16 @@ def create_random_graph(generator:callable, obfuscate:bool=True, **kwargs):
     """
     G = generator(**kwargs)
     if obfuscate:
-        G = nx.relabel_nodes(G, obfuscate_nodes(G.number_of_nodes()))
+        G = nx.relabel_nodes(G, obfuscate_nodes(G.number_of_nodes(), node_labels_pool=node_labels_pool))
     return G
 
-# %% ../nbs/02_generate_data.ipynb 18
+# %% ../nbs/02_generate_data.ipynb 19
 def create_and_save_random_graph(generator:callable,
                                  label_edges:str,
                                  path_to:str|Path,
                                  obfuscate:bool=True,
-                                 **kwargs):
+                                 node_labels_pool:list[str]=None,
+                                 **kwargs) -> nx.classes.graph.Graph:
     """
     Creates a random graph and saves it to path_to.
 
@@ -91,9 +92,11 @@ def create_and_save_random_graph(generator:callable,
         >>> create_random_graph_and_save(nx.erdos_renyi_graph, n=10, p=0.6, directed=False, path_to=path_data / 'synthetic' / '1.csv')
     """
 
-    G = create_random_graph(generator=generator, obfuscate=obfuscate, **kwargs)
+    G = create_random_graph(generator=generator, obfuscate=obfuscate, node_labels_pool=node_labels_pool, **kwargs)
     edges = G.edges()
     with open(path_to, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=' ')
         for edge in edges:
             writer.writerow([edge[0], edge[1], label_edges])
+    
+    return G
