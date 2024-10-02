@@ -25,27 +25,40 @@ Create a small multilayer graph for testing purposes.
 
 ### obfuscate_nodes
 
->      obfuscate_nodes (n_nodes:int, str_len:int=10)
+>      obfuscate_nodes (n_nodes:int, node_labels_pool:list[str]=None,
+>                       str_len:int=10)
 
 *Maps nodes from range \[0, n_nodes) to unique random strings of length
 str_len. All upper case letters and digits are used, starts with a
-letter.*
+letter. If node_labels_pool is provided, nodes selected from it if
+len(node_labels_pool) \>= n_nodes, otherwise, additional unique nodes
+are generated.*
 
 ``` python
-d = obfuscate_nodes(n_nodes=10)
+d = obfuscate_nodes(n_nodes=3)
 d
 ```
 
-    {0: 'TDM64O28SE',
-     1: 'RM5SDNA1OK',
-     2: 'QR899VV1BX',
-     3: 'KY0DL1ZA12',
-     4: 'LMJ97OFR4T',
-     5: 'SF9IFSZ6FW',
-     6: 'NPDRTOOGCO',
-     7: 'Q2VY4N4GSM',
-     8: 'XLRB0CDJQV',
-     9: 'ZQDUOFQK5Z'}
+    {0: 'P859FBHXV3', 1: 'DAH2WV1U39', 2: 'DQW5XMM3CG'}
+
+``` python
+node_labels_pool = ['TI672Y15ZU', 'S0SM5PZWDN','G54WMQPO11']
+d = obfuscate_nodes(n_nodes=2, node_labels_pool=node_labels_pool)
+d
+```
+
+    {0: 'TI672Y15ZU', 1: 'S0SM5PZWDN'}
+
+``` python
+d = obfuscate_nodes(n_nodes=5, node_labels_pool=node_labels_pool)
+d
+```
+
+    {0: 'TI672Y15ZU',
+     1: 'WG4IGPGTKY',
+     2: 'G54WMQPO11',
+     3: 'IHSNALFLAJ',
+     4: 'S0SM5PZWDN'}
 
 The following is a thin wrapper around the random graph generators from
 [networkx](https://networkx.org/documentation/stable/reference/generators.html#module-networkx.generators.random_graphs)
@@ -56,7 +69,8 @@ package.
 ### create_random_graph
 
 >      create_random_graph (generator:<built-infunctioncallable>,
->                           obfuscate:bool=True, **kwargs)
+>                           obfuscate:bool=True,
+>                           node_labels_pool:list[str]=None, **kwargs)
 
 \*Thin wrapper around networkx’s random graph generator
 
@@ -65,14 +79,20 @@ Args: generator (callable): networkx’s random graph generator
 create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)\*
 
 ``` python
-G = create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)
+node_labels_pool
+```
+
+    ['TI672Y15ZU', 'S0SM5PZWDN', 'G54WMQPO11']
+
+``` python
+G = create_random_graph(nx.erdos_renyi_graph, node_labels_pool=node_labels_pool, n=5, p=0.6, directed=False)
 ```
 
 ``` python
 G.nodes()
 ```
 
-    NodeView(('S6QFO1ZOOD', 'V6F732N51S', 'DZ4QNV6LC6', 'D4POADW5GR', 'O5H4A5JYGS', 'XUB6AWP171', 'H7PL8A6NRT', 'XSA9A9HXBI', 'SF1UYD46BO', 'DQC077RYGA'))
+    NodeView(('S0SM5PZWDN', 'RID89IMSBE', 'G54WMQPO11', 'TI672Y15ZU', 'B5N8HDG5QV'))
 
 Create random graph and write it to the disk:
 
@@ -81,8 +101,9 @@ Create random graph and write it to the disk:
 ### create_and_save_random_graph
 
 >      create_and_save_random_graph (generator:<built-infunctioncallable>,
->                                    label:str, path_to:str|pathlib.Path,
->                                    obfuscate:bool=True, **kwargs)
+>                                    label_edges:str, path_to:str|pathlib.Path,
+>                                    obfuscate:bool=True,
+>                                    node_labels_pool:list[str]=None, **kwargs)
 
 \*Creates a random graph and saves it to path_to.
 
@@ -103,16 +124,20 @@ path_dir_to.mkdir(exist_ok=True)
 ```
 
 ``` python
-n, p, label = 300, 0.6, "first"
-create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '1.csv', n=n, p=p)
+node_labels_pool = []
 
-n, p, label = 500, 0.4, "second"
-create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '2.csv', n=n, p=p)
+n, p, label_edges = 300, 0.2, "first"
+G_1 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '1.csv',
+                                   obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
+node_labels_pool.extend(list(G_1.nodes()))
 
-n, p, label = 400, 0.7, "third"
-create_and_save_random_graph(nx.erdos_renyi_graph, label, path_dir_to / '3.csv', n=n, p=p)
+n, p, label_edges = 500, 0.2, "second"
+G_2 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '2.csv',
+                                   obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
+node_labels_pool.extend(list(G_2.nodes()))
+
+n, p, label_edges = 400, 0.2, "third"
+G_3 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '3.csv',
+                                   obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
+node_labels_pool.extend(list(G_3.nodes()))
 ```
-
-The method above generates obfuscated graph with node labels different
-from layer to layer. However, for multilayer community analysis we need
-that at least some nodes share labels among layers.
