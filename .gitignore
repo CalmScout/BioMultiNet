@@ -152,6 +152,7 @@ checklink/cookies.txt
 
 # My files
 CmmD/
-data/
+data/synthetic/
+data/multilayer_network/
 out/
 
