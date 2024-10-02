@@ -5,7 +5,9 @@ permissions:
   pages: write
 
 on:
-  push:
+  # push:
+  #   branches: [ "main", "master" ]
+  pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
 jobs:
