@@ -200,6 +200,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#scenario-1" id="toc-scenario-1" class="nav-link" data-scroll-target="#scenario-1">1.1 Scenario 1</a></li>
   </ul></li>
   <li><a href="#benchmarking" id="toc-benchmarking" class="nav-link" data-scroll-target="#benchmarking">2. Benchmarking</a></li>
+  <li><a href="#results-visualization" id="toc-results-visualization" class="nav-link" data-scroll-target="#results-visualization">3. Results visualization</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/CalmScout/BioMultiNet/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="code_profiling.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
     </div>
@@ -239,19 +240,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tracemalloc</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gc</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BioMultiNet.utils <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BioMultiNet.cmmd <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> networkx <span class="im">as</span> nx</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm.notebook <span class="im">import</span> tqdm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-5" class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BioMultiNet.utils <span class="im">import</span> <span class="op">*</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BioMultiNet.cmmd <span class="im">import</span> <span class="op">*</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> networkx <span class="im">as</span> nx</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm.notebook <span class="im">import</span> tqdm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-6" class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>path_to_benchmark <span class="op">=</span> Path(<span class="st">"../data/benchmark/"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>path_to_benchmark.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>path_to_benchmark <span class="op">=</span> Path(<span class="st">"../data/benchmark/"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>path_to_benchmark.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="generate-synthetic-datasets" class="level2">
@@ -259,39 +260,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="scenario-1" class="level3">
 <h3 class="anchored" data-anchor-id="scenario-1">1.1 Scenario 1</h3>
 <p>Increase number of layers, all layers have the same number of nodes in them (<code>200</code>).</p>
+<div id="cell-9" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>n_layers <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="dv">150</span><span class="op">+</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">200</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> <span class="fl">0.2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div id="cell-10" class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>n_layers <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="dv">101</span>, <span class="dv">1</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">200</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> <span class="fl">0.2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>path_to <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="st">"scenario-1"</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>path_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-11" class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>path_to <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="st">"scenario-1"</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>path_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-12" class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>obfuscate <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>label_edges <span class="op">=</span> <span class="st">""</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_layer <span class="kw">in</span> tqdm(n_layers):</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># create directory for the dataset with current number of layers</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    path_to <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="ss">f"scenario-1/</span><span class="sc">{</span>n_layer<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    path_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># populate created directory with synthetic layers</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    node_labels_pool <span class="op">=</span> []</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> n_layer_idx <span class="kw">in</span> <span class="bu">range</span>(n_layer):</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        G <span class="op">=</span> create_and_save_random_graph(generator<span class="op">=</span>nx.erdos_renyi_graph,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                                        label_edges<span class="op">=</span>label_edges,</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                                        path_to<span class="op">=</span>path_to <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>n_layer_idx<span class="sc">}</span><span class="ss">.csv"</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                                        n<span class="op">=</span>n,</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                                        p<span class="op">=</span>p,</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>                                        directed<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>                                        obfuscate<span class="op">=</span>obfuscate,</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>                                        node_labels_pool<span class="op">=</span>node_labels_pool)</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        node_labels_pool.extend(<span class="bu">list</span>(G.nodes()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>obfuscate <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>label_edges <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_layer <span class="kw">in</span> tqdm(n_layers):</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># create directory for the dataset with current number of layers</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    path_to <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="ss">f"scenario-1/</span><span class="sc">{</span>n_layer<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    path_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># populate created directory with synthetic layers</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    node_labels_pool <span class="op">=</span> []</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> n_layer_idx <span class="kw">in</span> <span class="bu">range</span>(n_layer):</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        G <span class="op">=</span> create_and_save_random_graph(generator<span class="op">=</span>nx.erdos_renyi_graph,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                                        label_edges<span class="op">=</span>label_edges,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                                        path_to<span class="op">=</span>path_to <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>n_layer_idx<span class="sc">}</span><span class="ss">.csv"</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                                        n<span class="op">=</span>n,</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                                        p<span class="op">=</span>p,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                                        directed<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                                        obfuscate<span class="op">=</span>obfuscate,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                                        node_labels_pool<span class="op">=</span>node_labels_pool)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        node_labels_pool.extend(<span class="bu">list</span>(G.nodes()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"3e20d887b0ff4ab998b7d129653e4371","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+{"model_id":"ead1c9b04f8b43a58561c13a8b88eaf8","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
 </script>
 </div>
 </div>
@@ -300,57 +301,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="benchmarking" class="level2">
 <h2 class="anchored" data-anchor-id="benchmarking">2. Benchmarking</h2>
 <p>For the selected scenario let’s compute community detection problem, log consumed resources and viaualize them.</p>
-<div id="cell-15" class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {}</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>prefix_ <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="st">"scenario-1"</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> tqdm(os.listdir(prefix_)):</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># select the folder with the mentioned number of layers</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    prefix <span class="op">=</span> <span class="bu">str</span>(prefix_) <span class="op">+</span> <span class="st">"/"</span> <span class="op">+</span> k</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># list of the filenames - input layers</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    input_layers <span class="op">=</span> [prefix <span class="op">+</span> <span class="st">"/"</span> <span class="op">+</span> x <span class="cf">for</span> x <span class="kw">in</span> os.listdir(prefix) <span class="cf">if</span> x.endswith(<span class="st">".csv"</span>)]</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> l <span class="kw">in</span> input_layers:</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> Path(l).exists()</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.time()</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    cmmd_output <span class="op">=</span> cmmd(nodelist <span class="op">=</span> <span class="va">None</span>,</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        input_layers <span class="op">=</span> input_layers,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        gamma_min <span class="op">=</span> <span class="dv">0</span>,</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        gamma_max <span class="op">=</span> <span class="dv">30</span>,</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        gamma_step <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        path_to_communities <span class="op">=</span> <span class="st">"../out/communities/"</span>,</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        distmethod <span class="op">=</span> <span class="st">"hamming"</span>,</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>        n_jobs <span class="op">=</span> <span class="dv">6</span>)</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    duration <span class="op">=</span> time.time() <span class="op">-</span> start</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># clean up</span></span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    shutil.rmtree(<span class="st">"../out/communities/"</span>)</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    d[k] <span class="op">=</span> duration</span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-14" class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {}</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>prefix_ <span class="op">=</span> path_to_benchmark <span class="op">/</span> <span class="st">"scenario-1"</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> tqdm(os.listdir(prefix_)):</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># select the folder with the mentioned number of layers</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    prefix <span class="op">=</span> <span class="bu">str</span>(prefix_) <span class="op">+</span> <span class="st">"/"</span> <span class="op">+</span> k</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># list of the filenames - input layers</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    input_layers <span class="op">=</span> [prefix <span class="op">+</span> <span class="st">"/"</span> <span class="op">+</span> x <span class="cf">for</span> x <span class="kw">in</span> os.listdir(prefix) <span class="cf">if</span> x.endswith(<span class="st">".csv"</span>)]</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> l <span class="kw">in</span> input_layers:</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> Path(l).exists()</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    tracemalloc.start()</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.time()</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    cmmd_output <span class="op">=</span> cmmd(nodelist <span class="op">=</span> <span class="va">None</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        input_layers <span class="op">=</span> input_layers,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        gamma_min <span class="op">=</span> <span class="dv">0</span>,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        gamma_max <span class="op">=</span> <span class="dv">30</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        gamma_step <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        path_to_communities <span class="op">=</span> <span class="st">"../out/communities/"</span>,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        distmethod <span class="op">=</span> <span class="st">"hamming"</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        n_jobs <span class="op">=</span> <span class="dv">6</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    duration <span class="op">=</span> time.time() <span class="op">-</span> start</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    _, peak_mem <span class="op">=</span> tracemalloc.get_traced_memory()</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    tracemalloc.stop()</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    gc.collect()</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># clean up</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    shutil.rmtree(<span class="st">"../out/communities/"</span>)</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    d[k] <span class="op">=</span> (duration, peak_mem <span class="op">/</span> <span class="dv">10</span><span class="op">**</span><span class="dv">6</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"bb51f78fd241411f9bab86397b31fcc8","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+{"model_id":"77ac4efa198640058d522f96fb2c3335","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
 </script>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{'31': 6.770324945449829, '75': 14.484583854675293, '42': 8.959571838378906, '15': 3.7124531269073486, '71': 13.9744873046875, '3': 1.1011457443237305, '78': 15.205758571624756, '24': 5.371524095535278, '84': 16.141170501708984, '100': 19.349994897842407, '72': 14.28057074546814, '85': 16.635345220565796, '59': 11.813063621520996, '12': 3.14388370513916, '88': 17.228288412094116, '90': 17.65051031112671, '66': 13.965642213821411, '8': 2.285508394241333, '17': 4.0732581615448, '4': 1.3713326454162598, '38': 8.058760643005371, '20': 4.781110763549805, '93': 18.834080934524536, '18': 4.254984140396118, '21': 4.830830335617065, '5': 1.65264892578125, '70': 13.980457305908203, '65': 12.718465566635132, '73': 14.824580669403076, '22': 5.000579357147217, '9': 2.51029634475708, '6': 1.818345546722412, '53': 11.076967477798462, '2': 0.8684158325195312, '91': 17.708168745040894, '98': 18.87727403640747, '55': 11.234635591506958, '50': 10.009679794311523, '49': 10.039834260940552, '94': 18.309519290924072, '33': 7.08008074760437, '99': 19.352848052978516, '76': 15.50121808052063, '54': 10.795984029769897, '60': 11.950036764144897, '69': 13.361162662506104, '68': 13.784982204437256, '89': 17.226262092590332, '26': 5.859835386276245, '23': 5.183246850967407, '77': 15.258048057556152, '44': 9.00645661354065, '61': 12.308953523635864, '37': 8.04716944694519, '7': 1.9662771224975586, '28': 5.9620726108551025, '32': 6.768187761306763, '39': 8.059011697769165, '25': 5.441216945648193, '56': 11.154169797897339, '64': 12.184103012084961, '74': 14.449753284454346, '29': 6.344885587692261, '82': 16.61689043045044, '11': 2.9028053283691406, '16': 3.9098587036132812, '48': 9.772667646408081, '80': 15.921027898788452, '95': 18.184608221054077, '81': 15.95603346824646, '62': 12.219666004180908, '86': 16.82018208503723, '35': 7.4861719608306885, '51': 10.61707329750061, '57': 11.506405115127563, '83': 16.195647716522217, '43': 9.08676028251648, '41': 8.651748895645142, '40': 8.447950601577759, '36': 7.587794303894043, '63': 12.859253168106079, '19': 4.550904273986816, '67': 13.500339031219482, '79': 15.75006628036499, '58': 11.457986116409302, '13': 2.803053379058838, '1': 0.5027480125427246, '14': 3.0981554985046387, '87': 15.07165265083313, '10': 2.4170913696289062, '46': 8.43606424331665, '27': 5.302222013473511, '47': 8.52686333656311, '96': 16.940941333770752, '52': 9.4132080078125, '30': 5.892106771469116, '45': 8.464815378189087, '92': 16.185070991516113, '97': 17.319541692733765, '34': 6.687211036682129}</code></pre>
+<pre><code>{'31': (6.6401567459106445, 1.583972), '110': (20.08843469619751, 1.590054), '128': (23.952899932861328, 1.589792), '75': (18.371647596359253, 1.590295), '42': (10.392093420028687, 1.58954), '15': (4.350262880325317, 1.589449), '71': (20.158670902252197, 1.58981), '3': (1.9324336051940918, 1.588852), '78': (20.073027849197388, 1.589545), '137': (25.081848621368408, 1.590823), '24': (4.837420225143433, 1.5893), '84': (15.485441446304321, 1.589751), '102': (18.17660093307495, 1.590248), '119': (26.785380840301514, 1.5905), '100': (24.030139684677124, 1.589208), '72': (18.660735845565796, 1.589369), '107': (25.969223499298096, 1.589673), '85': (16.511123418807983, 1.589476), '111': (20.88786482810974, 1.589586), '122': (21.603976488113403, 1.589258), '135': (29.07182025909424, 1.589733), '59': (14.671281576156616, 1.589343), '12': (3.8031013011932373, 1.588692), '88': (20.74808144569397, 1.58939), '114': (27.256317377090454, 1.590196), '142': (27.471639394760132, 1.589811), '90': (16.462408304214478, 1.589385), '66': (12.268943548202515, 1.590278), '8': (2.285226821899414, 1.590013), '17': (5.009071350097656, 1.589279), '144': (33.79296588897705, 1.590666), '134': (31.01753520965576, 1.589749), '101': (24.433273315429688, 1.58916), '4': (1.5937538146972656, 1.588153), '38': (9.27019739151001, 1.589062), '139': (24.491292715072632, 1.589369), '147': (26.899035930633545, 1.58955), '20': (4.548960208892822, 1.589456), '141': (31.542210578918457, 1.589243), '93': (21.247742891311646, 1.589606), '18': (4.957444906234741, 1.588934), '21': (5.709347486495972, 1.589008), '5': (1.904320478439331, 1.588875), '140': (28.245593309402466, 1.590132), '70': (12.697094678878784, 1.589278), '65': (11.925783157348633, 1.58928), '73': (13.595327377319336, 1.589271), '129': (23.03379797935486, 1.589407), '22': (4.737931966781616, 1.588482), '9': (2.3153111934661865, 1.589482), '118': (21.27147603034973, 1.58913), '6': (1.7935266494750977, 1.588164), '133': (23.752883672714233, 1.589416), '53': (10.324042558670044, 1.589475), '2': (0.8882665634155273, 1.587246), '91': (17.10821795463562, 1.590191), '98': (18.012207984924316, 1.589547), '55': (10.55074405670166, 1.589168), '50': (9.615413188934326, 1.589115), '49': (9.712941408157349, 1.589339), '94': (17.769633769989014, 1.58941), '33': (6.665521621704102, 1.589351), '99': (18.416918992996216, 1.589394), '148': (28.78986406326294, 1.589596), '76': (17.489710092544556, 1.589373), '105': (20.376423120498657, 1.589457), '54': (12.510537385940552, 1.590671), '60': (15.313776731491089, 1.589352), '69': (16.671395301818848, 1.589728), '120': (25.326231956481934, 1.589304), '109': (19.46269130706787, 1.589403), '68': (12.634001731872559, 1.589283), '138': (25.66702389717102, 1.589643), '126': (22.834117889404297, 1.589399), '89': (16.656821727752686, 1.589571), '26': (5.510242223739624, 1.589477), '23': (4.872486114501953, 1.589085), '77': (14.318829536437988, 1.589452), '103': (22.57999897003174, 1.589409), '44': (10.644545793533325, 1.589796), '61': (13.849853754043579, 1.589355), '37': (7.0790324211120605, 1.588515), '7': (1.9001045227050781, 1.587975), '28': (5.508243799209595, 1.589906), '149': (32.478610038757324, 1.5896), '112': (25.939360857009888, 1.589575), '130': (23.168734312057495, 1.589422), '106': (18.504772901535034, 1.589065), '32': (6.554488658905029, 1.589431), '39': (7.503934621810913, 1.589243), '25': (5.117197036743164, 1.588364), '56': (10.419493436813354, 1.590301), '64': (11.913310766220093, 1.589256), '74': (13.764897346496582, 1.58957), '150': (27.003723621368408, 1.589344), '29': (5.9492573738098145, 1.588672), '82': (15.195684671401978, 1.589362), '146': (29.307599306106567, 1.589425), '125': (29.54254388809204, 1.589311), '11': (2.8467233180999756, 1.588323), '16': (3.5766968727111816, 1.588747), '48': (8.920963525772095, 1.589326), '80': (17.620351552963257, 1.589129), '121': (27.65226411819458, 1.5897), '95': (21.026347875595093, 1.589784), '123': (21.617286682128906, 1.589337), '81': (14.954148769378662, 1.588868), '62': (12.445334911346436, 1.58953), '143': (26.25694489479065, 1.589553), '86': (16.41627264022827, 1.589212), '115': (22.636006593704224, 1.589088), '35': (9.63805603981018, 1.590141), '51': (13.421935319900513, 1.589411), '104': (23.699543237686157, 1.589329), '57': (10.737646102905273, 1.589249), '83': (21.469062089920044, 1.588996), '43': (12.870519161224365, 1.589363), '108': (26.80981206893921, 1.589274), '41': (8.259312391281128, 1.589664), '40': (7.844918727874756, 1.590493), '127': (23.337915182113647, 1.59023), '36': (7.001128911972046, 1.589102), '63': (11.957245826721191, 1.589316), '19': (4.090844631195068, 1.588337), '67': (12.189783573150635, 1.589993), '79': (14.973519086837769, 1.589321), '58': (11.362993240356445, 1.589291), '13': (3.2441134452819824, 1.589441), '1': (0.588526725769043, 1.587869), '14': (3.660818338394165, 1.589427), '87': (20.89636778831482, 1.589555), '10': (3.465169668197632, 1.588493), '46': (11.689428329467773, 1.589332), '27': (7.5264739990234375, 1.588641), '47': (12.221644639968872, 1.589516), '117': (22.089319467544556, 1.589471), '96': (22.51437282562256, 1.590857), '52': (12.921737432479858, 1.589977), '145': (32.28755259513855, 1.589274), '116': (23.042689561843872, 1.590106), '30': (6.790537118911743, 1.589481), '136': (24.690468549728394, 1.589206), '132': (23.86153554916382, 1.589136), '45': (9.849696397781372, 1.589982), '113': (29.89237642288208, 1.589204), '124': (37.45063090324402, 1.589739), '92': (23.531997442245483, 1.589556), '97': (23.473920822143555, 1.589125), '131': (30.412002086639404, 1.58953), '34': (8.43705940246582, 1.589245)}</code></pre>
 </div>
 </div>
+</section>
+<section id="results-visualization" class="level2">
+<h2 class="anchored" data-anchor-id="results-visualization">3. Results visualization</h2>
 <div id="cell-16" class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sort the dictionary</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>sorted_d <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">sorted</span>(d.items(), key<span class="op">=</span><span class="kw">lambda</span> item: item[<span class="dv">1</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sort the dictionary</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>sorted_d <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">sorted</span>(d.items(), key<span class="op">=</span><span class="kw">lambda</span> item: item[<span class="dv">1</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-17" class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create a dataframe from the dictionary</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame.from_dict(sorted_d, orient<span class="op">=</span><span class="st">'index'</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index()</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.rename(columns<span class="op">=</span>{<span class="st">'index'</span>: <span class="st">'n_layers'</span>, <span class="dv">0</span>: <span class="st">'duration'</span>})</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create a dataframe from the dictionary</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame.from_dict(sorted_d, orient<span class="op">=</span><span class="st">'index'</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index()</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.rename(columns<span class="op">=</span>{<span class="st">'index'</span>: <span class="st">'n_layers'</span>, <span class="dv">0</span>: <span class="st">'duration'</span>, <span class="dv">1</span>: <span class="st">'peak_mem, MB'</span>})</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -361,33 +370,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">n_layers</th>
 <th data-quarto-table-cell-role="th">duration</th>
+<th data-quarto-table-cell-role="th">peak_mem, MB</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">0</td>
 <td>1</td>
-<td>0.502748</td>
+<td>0.588527</td>
+<td>1.587869</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">1</td>
 <td>2</td>
-<td>0.868416</td>
+<td>0.888267</td>
+<td>1.587246</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">2</td>
-<td>3</td>
-<td>1.101146</td>
+<td>4</td>
+<td>1.593754</td>
+<td>1.588153</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">3</td>
-<td>4</td>
-<td>1.371333</td>
+<td>6</td>
+<td>1.793527</td>
+<td>1.588164</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">4</td>
-<td>5</td>
-<td>1.652649</td>
+<td>7</td>
+<td>1.900105</td>
+<td>1.587975</td>
 </tr>
 </tbody>
 </table>
@@ -396,25 +411,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div id="cell-18" class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># save the dataframe to csv</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>df.to_csv(<span class="st">"../out/duration.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># save the dataframe to csv</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>df.to_csv(<span class="st">"../out/duration.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-19" class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>width <span class="op">=</span> <span class="dv">15</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>height <span class="op">=</span> <span class="dv">8</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams[<span class="st">'figure.figsize'</span>] <span class="op">=</span> [width, height]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>width <span class="op">=</span> <span class="dv">15</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>height <span class="op">=</span> <span class="dv">8</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams[<span class="st">'figure.figsize'</span>] <span class="op">=</span> [width, height]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-20" class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the plot (using a line plot as an example)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sns.lineplot(x<span class="op">=</span><span class="st">'n_layers'</span>, y<span class="op">=</span><span class="st">'duration'</span>, data<span class="op">=</span>df, marker<span class="op">=</span><span class="st">'o'</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotate the x-axis labels for a compact look</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>)  <span class="co"># Rotate by 45 degrees</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Add labels and title</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Number of Layers'</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Execution time, s'</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'200 nodes in each layer, nx.erdos_renyi_graph, p=0.2'</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the plot</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05_code_profiling_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-21" class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the plot (using a line plot as an example)</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>sns.lineplot(x<span class="op">=</span><span class="st">'n_layers'</span>, y<span class="op">=</span><span class="st">'duration'</span>, data<span class="op">=</span>df, marker<span class="op">=</span><span class="st">'o'</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>sns.lineplot(x<span class="op">=</span><span class="st">'n_layers'</span>, y<span class="op">=</span><span class="st">'peak_mem, MB'</span>, data<span class="op">=</span>df, marker<span class="op">=</span><span class="st">'o'</span>)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotate the x-axis labels for a compact look</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>)  <span class="co"># Rotate by 45 degrees</span></span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Add labels and title</span></span>
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Number of Layers'</span>)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Execution time, s'</span>)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Execution time vs Number of Layers'</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Peak memory usage, MB'</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'200 nodes in each layer, nx.erdos_renyi_graph, p=0.2'</span>)</span>
 <span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the plot</span></span>
 <span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
