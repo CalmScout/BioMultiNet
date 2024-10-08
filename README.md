@@ -26,8 +26,9 @@ aspect)(description from
 
 ## Roadmap
 
-- [ ] Generate small dataset and cover code by tests
-- [ ] Port implementation of CmmD algorithm from R to Python
+- [ ] Cover code by tests
+- [x] Add functionality to generate synthetic networks
+- [x] Port implementation of CmmD algorithm from R to Python
 - [ ] Profile and optimize code (MNHACK24)
 - [ ] Explore alternatives to MolTi clustering
 - [ ] Reimplement Louvian clustering in Python, add additional community

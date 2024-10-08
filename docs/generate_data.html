@@ -205,8 +205,8 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./community_detection.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Community detection</span></a>
+  <a href="./code_profiling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Community detection code profiling</span></a>
   </div>
 </li>
     </ul>
@@ -260,7 +260,7 @@ window.Quarto = {
 </ol>
 <section id="imports-and-paths" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-paths">0. Imports and paths</h2>
-<div id="cell-4" class="cell" data-execution_count="5">
+<div id="cell-4" class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>path_data <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>path_data.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -276,30 +276,30 @@ window.Quarto = {
                   str_len:int=10)</code></pre>
 </blockquote>
 <p><em>Maps nodes from range [0, n_nodes) to unique random strings of length str_len. All upper case letters and digits are used, starts with a letter. If node_labels_pool is provided, nodes selected from it if len(node_labels_pool) &gt;= n_nodes, otherwise, additional unique nodes are generated.</em></p>
-<div id="cell-7" class="cell" data-execution_count="7">
+<div id="cell-7" class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> obfuscate_nodes(n_nodes<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>{0: 'P859FBHXV3', 1: 'DAH2WV1U39', 2: 'DQW5XMM3CG'}</code></pre>
+<div class="cell-output cell-output-display">
+<pre><code>{0: 'PAZN0O9IIH', 1: 'MNMUZUM48X', 2: 'VDBU4HPMCC'}</code></pre>
 </div>
 </div>
-<div id="cell-8" class="cell" data-execution_count="8">
+<div id="cell-8" class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>node_labels_pool <span class="op">=</span> [<span class="st">'TI672Y15ZU'</span>, <span class="st">'S0SM5PZWDN'</span>,<span class="st">'G54WMQPO11'</span>]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> obfuscate_nodes(n_nodes<span class="op">=</span><span class="dv">2</span>, node_labels_pool<span class="op">=</span>node_labels_pool)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="8">
-<pre><code>{0: 'TI672Y15ZU', 1: 'S0SM5PZWDN'}</code></pre>
+<div class="cell-output cell-output-display">
+<pre><code>{0: 'S0SM5PZWDN', 1: 'TI672Y15ZU'}</code></pre>
 </div>
 </div>
-<div id="cell-9" class="cell" data-execution_count="9">
+<div id="cell-9" class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> obfuscate_nodes(n_nodes<span class="op">=</span><span class="dv">5</span>, node_labels_pool<span class="op">=</span>node_labels_pool)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="9">
-<pre><code>{0: 'TI672Y15ZU',
- 1: 'WG4IGPGTKY',
- 2: 'G54WMQPO11',
- 3: 'IHSNALFLAJ',
- 4: 'S0SM5PZWDN'}</code></pre>
+<div class="cell-output cell-output-display">
+<pre><code>{0: 'JNFJDR2ZFN',
+ 1: 'S0SM5PZWDN',
+ 2: 'UTG42RLL53',
+ 3: 'TI672Y15ZU',
+ 4: 'G54WMQPO11'}</code></pre>
 </div>
 </div>
 <p>The following is a thin wrapper around the random graph generators from <a href="https://networkx.org/documentation/stable/reference/generators.html#module-networkx.generators.random_graphs">networkx</a> package.</p>
@@ -314,19 +314,19 @@ window.Quarto = {
 </blockquote>
 <p>*Thin wrapper around networkx’s random graph generator</p>
 <p>Args: generator (callable): networkx’s random graph generator **kwargs: passed to generator Example: &gt;&gt;&gt; G = create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)*</p>
-<div id="cell-12" class="cell" data-execution_count="11">
+<div id="cell-12" class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>node_labels_pool</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="11">
-<pre><code>['TI672Y15ZU', 'S0SM5PZWDN', 'G54WMQPO11']</code></pre>
+<div class="cell-output cell-output-display">
+<pre><code>['G54WMQPO11', 'S0SM5PZWDN', 'TI672Y15ZU']</code></pre>
 </div>
 </div>
-<div id="cell-13" class="cell" data-execution_count="12">
+<div id="cell-13" class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> create_random_graph(nx.erdos_renyi_graph, node_labels_pool<span class="op">=</span>node_labels_pool, n<span class="op">=</span><span class="dv">5</span>, p<span class="op">=</span><span class="fl">0.6</span>, directed<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-14" class="cell" data-execution_count="13">
+<div id="cell-14" class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>G.nodes()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="13">
-<pre><code>NodeView(('S0SM5PZWDN', 'RID89IMSBE', 'G54WMQPO11', 'TI672Y15ZU', 'B5N8HDG5QV'))</code></pre>
+<div class="cell-output cell-output-display">
+<pre><code>NodeView(('SBCUX8F7ST', 'S0SM5PZWDN', 'G54WMQPO11', 'TI672Y15ZU', 'JYSAI9KPVS'))</code></pre>
 </div>
 </div>
 <p>Create random graph and write it to the disk:</p>
@@ -344,24 +344,25 @@ window.Quarto = {
 <p>Args: generator (callable): networkx’s random graph generator obfuscate (bool, optional): if true, obfuscates node names. Defaults to True. path_to (str|Path, optional): path to save the graph. Defaults to None.</p>
 <p>Example: &gt;&gt;&gt; create_random_graph_and_save(nx.erdos_renyi_graph, n=10, p=0.6, directed=False, path_to=path_data / ‘synthetic’ / ‘1.csv’)*</p>
 <p>Create three layers. For experiments with CmmD algorithm we need at least several hundreds of nodes to see the difference in the clustering with a variety of <span class="math inline">\(\gamma\)</span> values:</p>
-<div id="cell-18" class="cell" data-execution_count="15">
+<div id="cell-18" class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>path_dir_to <span class="op">=</span> path_data <span class="op">/</span> <span class="st">'synthetic'</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>path_dir_to.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-19" class="cell" data-execution_count="16">
+<p>Leaving the <code>label_edge</code> empty allows to follow the required format for MolTi community detection software:</p>
+<div id="cell-20" class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>node_labels_pool <span class="op">=</span> []</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">300</span>, <span class="fl">0.2</span>, <span class="st">"first"</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">300</span>, <span class="fl">0.2</span>, <span class="st">""</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>G_1 <span class="op">=</span> create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to <span class="op">/</span> <span class="st">'1.csv'</span>,</span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                                   obfuscate<span class="op">=</span><span class="va">True</span>, node_labels_pool<span class="op">=</span>node_labels_pool, n<span class="op">=</span>n, p<span class="op">=</span>p)</span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>node_labels_pool.extend(<span class="bu">list</span>(G_1.nodes()))</span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">500</span>, <span class="fl">0.2</span>, <span class="st">"second"</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">500</span>, <span class="fl">0.2</span>, <span class="st">""</span></span>
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>G_2 <span class="op">=</span> create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to <span class="op">/</span> <span class="st">'2.csv'</span>,</span>
 <span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>                                   obfuscate<span class="op">=</span><span class="va">True</span>, node_labels_pool<span class="op">=</span>node_labels_pool, n<span class="op">=</span>n, p<span class="op">=</span>p)</span>
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>node_labels_pool.extend(<span class="bu">list</span>(G_2.nodes()))</span>
 <span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">400</span>, <span class="fl">0.2</span>, <span class="st">"third"</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>n, p, label_edges <span class="op">=</span> <span class="dv">400</span>, <span class="fl">0.2</span>, <span class="st">""</span></span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>G_3 <span class="op">=</span> create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to <span class="op">/</span> <span class="st">'3.csv'</span>,</span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>                                   obfuscate<span class="op">=</span><span class="va">True</span>, node_labels_pool<span class="op">=</span>node_labels_pool, n<span class="op">=</span>n, p<span class="op">=</span>p)</span>
 <span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>node_labels_pool.extend(<span class="bu">list</span>(G_3.nodes()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>

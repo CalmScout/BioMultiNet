@@ -39,7 +39,7 @@ d = obfuscate_nodes(n_nodes=3)
 d
 ```
 
-    {0: 'P859FBHXV3', 1: 'DAH2WV1U39', 2: 'DQW5XMM3CG'}
+    {0: 'PAZN0O9IIH', 1: 'MNMUZUM48X', 2: 'VDBU4HPMCC'}
 
 ``` python
 node_labels_pool = ['TI672Y15ZU', 'S0SM5PZWDN','G54WMQPO11']
@@ -47,18 +47,18 @@ d = obfuscate_nodes(n_nodes=2, node_labels_pool=node_labels_pool)
 d
 ```
 
-    {0: 'TI672Y15ZU', 1: 'S0SM5PZWDN'}
+    {0: 'S0SM5PZWDN', 1: 'TI672Y15ZU'}
 
 ``` python
 d = obfuscate_nodes(n_nodes=5, node_labels_pool=node_labels_pool)
 d
 ```
 
-    {0: 'TI672Y15ZU',
-     1: 'WG4IGPGTKY',
-     2: 'G54WMQPO11',
-     3: 'IHSNALFLAJ',
-     4: 'S0SM5PZWDN'}
+    {0: 'JNFJDR2ZFN',
+     1: 'S0SM5PZWDN',
+     2: 'UTG42RLL53',
+     3: 'TI672Y15ZU',
+     4: 'G54WMQPO11'}
 
 The following is a thin wrapper around the random graph generators from
 [networkx](https://networkx.org/documentation/stable/reference/generators.html#module-networkx.generators.random_graphs)
@@ -82,7 +82,7 @@ create_random_graph(nx.erdos_renyi_graph, n=10, p=0.6, directed=False)\*
 node_labels_pool
 ```
 
-    ['TI672Y15ZU', 'S0SM5PZWDN', 'G54WMQPO11']
+    ['G54WMQPO11', 'S0SM5PZWDN', 'TI672Y15ZU']
 
 ``` python
 G = create_random_graph(nx.erdos_renyi_graph, node_labels_pool=node_labels_pool, n=5, p=0.6, directed=False)
@@ -92,7 +92,7 @@ G = create_random_graph(nx.erdos_renyi_graph, node_labels_pool=node_labels_pool,
 G.nodes()
 ```
 
-    NodeView(('S0SM5PZWDN', 'RID89IMSBE', 'G54WMQPO11', 'TI672Y15ZU', 'B5N8HDG5QV'))
+    NodeView(('SBCUX8F7ST', 'S0SM5PZWDN', 'G54WMQPO11', 'TI672Y15ZU', 'JYSAI9KPVS'))
 
 Create random graph and write it to the disk:
 
@@ -123,20 +123,23 @@ path_dir_to = path_data / 'synthetic'
 path_dir_to.mkdir(exist_ok=True)
 ```
 
+Leaving the `label_edge` empty allows to follow the required format for
+MolTi community detection software:
+
 ``` python
 node_labels_pool = []
 
-n, p, label_edges = 300, 0.2, "first"
+n, p, label_edges = 300, 0.2, ""
 G_1 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '1.csv',
                                    obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
 node_labels_pool.extend(list(G_1.nodes()))
 
-n, p, label_edges = 500, 0.2, "second"
+n, p, label_edges = 500, 0.2, ""
 G_2 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '2.csv',
                                    obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
 node_labels_pool.extend(list(G_2.nodes()))
 
-n, p, label_edges = 400, 0.2, "third"
+n, p, label_edges = 400, 0.2, ""
 G_3 = create_and_save_random_graph(nx.erdos_renyi_graph, label_edges, path_dir_to / '3.csv',
                                    obfuscate=True, node_labels_pool=node_labels_pool, n=n, p=p)
 node_labels_pool.extend(list(G_3.nodes()))

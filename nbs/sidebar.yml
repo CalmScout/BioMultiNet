@@ -6,4 +6,4 @@ website:
       - 02_generate_data.ipynb
       - 03_download_data.ipynb
       - 04_cmmd.ipynb
-      - 05_community_detection.ipynb
+      - 05_code_profiling.ipynb
